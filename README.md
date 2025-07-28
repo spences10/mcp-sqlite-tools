@@ -65,10 +65,10 @@ The server can be configured using environment variables:
 
 ```bash
 # Default directory for SQLite databases (relative to project root)
-SQLITE_DEFAULT_PATH=./databases
+SQLITE_DEFAULT_PATH=.
 
 # Allow absolute paths for database files (security setting)
-SQLITE_ALLOW_ABSOLUTE_PATHS=false
+SQLITE_ALLOW_ABSOLUTE_PATHS=true
 
 # Maximum query execution time in milliseconds
 SQLITE_MAX_QUERY_TIME=30000
@@ -93,11 +93,7 @@ For VS Code global configuration, edit `~/.config/Code/User/mcp.json` (or equiva
   "servers": {
     "sqlite-tools": {
       "command": "npx",
-      "args": ["-y", "mcp-sqlite-tools"],
-      "env": {
-        "SQLITE_DEFAULT_PATH": "${workspaceFolder}",
-        "SQLITE_ALLOW_ABSOLUTE_PATHS": "true"
-      }
+      "args": ["-y", "mcp-sqlite-tools"]
     }
   }
 }
@@ -110,11 +106,7 @@ For VS Code global configuration, edit `~/.config/Code/User/mcp.json` (or equiva
   "servers": {
     "sqlite-tools": {
       "command": "wsl.exe",
-      "args": [
-        "bash",
-        "-c",
-        "SQLITE_DEFAULT_PATH=${workspaceFolder} SQLITE_ALLOW_ABSOLUTE_PATHS=true npx -y mcp-sqlite-tools"
-      ]
+      "args": ["bash", "-c", "npx -y mcp-sqlite-tools"]
     }
   }
 }
@@ -163,8 +155,8 @@ Add this to your MCP client configuration:
       "command": "npx",
       "args": ["-y", "mcp-sqlite-tools"],
       "env": {
-        "SQLITE_DEFAULT_PATH": "./databases",
-        "SQLITE_ALLOW_ABSOLUTE_PATHS": "false",
+        "SQLITE_DEFAULT_PATH": ".",
+        "SQLITE_ALLOW_ABSOLUTE_PATHS": "true",
         "SQLITE_MAX_QUERY_TIME": "30000",
         "SQLITE_BACKUP_PATH": "./backups"
       }
@@ -179,8 +171,8 @@ The following environment variables can be used to configure the MCP server:
 
 | Variable                      | Description                                 | Default                       | Example                        |
 | ----------------------------- | ------------------------------------------- | ----------------------------- | ------------------------------ |
-| `SQLITE_DEFAULT_PATH`         | Default directory for database files        | `./`                          | `${workspaceFolder}/databases` |
-| `SQLITE_ALLOW_ABSOLUTE_PATHS` | Allow absolute paths in database operations | `false`                       | `true`                         |
+| `SQLITE_DEFAULT_PATH`         | Default directory for database files        | `.`                           | `${workspaceFolder}/databases` |
+| `SQLITE_ALLOW_ABSOLUTE_PATHS` | Allow absolute paths in database operations | `true`                        | `false`                        |
 | `SQLITE_BACKUP_PATH`          | Default directory for database backups      | Same as `SQLITE_DEFAULT_PATH` | `./backups`                    |
 | `SQLITE_MAX_QUERY_TIME`       | Maximum query execution time (ms)           | `30000`                       | `60000`                        |
 

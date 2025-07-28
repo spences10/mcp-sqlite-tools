@@ -6,7 +6,7 @@ import * as v from "valibot";
 
 // Define configuration schema using Valibot
 export const ConfigSchema = v.object({
-  SQLITE_DEFAULT_PATH: v.optional(v.string(), "./databases"),
+  SQLITE_DEFAULT_PATH: v.optional(v.string(), "."),
   SQLITE_ALLOW_ABSOLUTE_PATHS: v.optional(
     v.pipe(
       v.string(),
@@ -63,8 +63,8 @@ export function load_config(): Config {
 
     // Apply defaults for optional fields that weren't provided
     const configWithDefaults = {
-      SQLITE_DEFAULT_PATH: config.SQLITE_DEFAULT_PATH || "./databases",
-      SQLITE_ALLOW_ABSOLUTE_PATHS: config.SQLITE_ALLOW_ABSOLUTE_PATHS ?? false,
+      SQLITE_DEFAULT_PATH: config.SQLITE_DEFAULT_PATH || ".",
+      SQLITE_ALLOW_ABSOLUTE_PATHS: config.SQLITE_ALLOW_ABSOLUTE_PATHS ?? true,
       SQLITE_MAX_QUERY_TIME: config.SQLITE_MAX_QUERY_TIME ?? 30000,
       SQLITE_BACKUP_PATH: config.SQLITE_BACKUP_PATH || "./backups",
       DEBUG: config.DEBUG ?? false,
