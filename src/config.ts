@@ -1,12 +1,8 @@
 /**
  * Configuration management for the SQLite Tools MCP server
  */
-import dotenv from 'dotenv';
 import * as v from 'valibot';
 import { resolve } from 'node:path';
-
-// Load environment variables from .env file
-dotenv.config();
 
 // Define configuration schema using Valibot
 export const ConfigSchema = v.object({
@@ -15,8 +11,7 @@ export const ConfigSchema = v.object({
     v.pipe(
       v.string(),
       v.transform((val: string) => val.toLowerCase() === 'true')
-    ),
-    false
+    )
   ),
   SQLITE_MAX_QUERY_TIME: v.optional(
     v.pipe(
@@ -25,16 +20,14 @@ export const ConfigSchema = v.object({
       v.number(),
       v.minValue(1000),
       v.maxValue(300000)
-    ),
-    30000
+    )
   ),
   SQLITE_BACKUP_PATH: v.optional(v.string(), './backups'),
   DEBUG: v.optional(
     v.pipe(
       v.string(),
       v.transform((val: string) => val.toLowerCase() === 'true')
-    ),
-    false
+    )
   ),
 });
 
@@ -54,11 +47,20 @@ export function load_config(): Config {
 
     const config = v.parse(ConfigSchema, raw_config);
 
+    // Apply defaults for optional fields that weren't provided
+    const configWithDefaults = {
+      SQLITE_DEFAULT_PATH: config.SQLITE_DEFAULT_PATH || './databases',
+      SQLITE_ALLOW_ABSOLUTE_PATHS: config.SQLITE_ALLOW_ABSOLUTE_PATHS ?? false,
+      SQLITE_MAX_QUERY_TIME: config.SQLITE_MAX_QUERY_TIME ?? 30000,
+      SQLITE_BACKUP_PATH: config.SQLITE_BACKUP_PATH || './backups',
+      DEBUG: config.DEBUG ?? false,
+    };
+
     // Resolve paths to absolute paths for internal use
     return {
-      ...config,
-      SQLITE_DEFAULT_PATH: resolve(config.SQLITE_DEFAULT_PATH),
-      SQLITE_BACKUP_PATH: resolve(config.SQLITE_BACKUP_PATH),
+      ...configWithDefaults,
+      SQLITE_DEFAULT_PATH: resolve(configWithDefaults.SQLITE_DEFAULT_PATH),
+      SQLITE_BACKUP_PATH: resolve(configWithDefaults.SQLITE_BACKUP_PATH),
     };
   } catch (error: unknown) {
     if (error instanceof v.ValiError) {
