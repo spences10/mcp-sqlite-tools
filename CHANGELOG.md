@@ -1,5 +1,11 @@
 # mcp-sqlite-tools
 
+## 0.0.3
+
+### Patch Changes
+
+- feat: add pnpm workspace configuration and enhance logging in SQLite Tools MCP server
+
 ## 0.0.2
 
 ### Patch Changes
