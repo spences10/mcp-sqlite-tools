@@ -1,23 +1,30 @@
 #!/usr/bin/env node
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+console.error("Starting mcp-sqlite-tools server...");
 
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
-import { get_config } from './config.js';
-import { registerTools } from './tools/handler.js';
-import { closeAllDatabases } from './clients/sqlite.js';
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { closeAllDatabases } from "./clients/sqlite.js";
+import { get_config } from "./config.js";
+import { registerTools } from "./tools/handler.js";
 
+console.error("Importing configuration...");
+console.error("Importing tools handler...");
+console.error("Importing SQLite client...");
+
+console.error("Getting package info...");
 // Get package info for server metadata
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const pkg = JSON.parse(
-  readFileSync(join(__dirname, '..', 'package.json'), 'utf8'),
+  readFileSync(join(__dirname, "..", "package.json"), "utf8")
 );
 const { name, version } = pkg;
+console.error(`Package: ${name} v${version}`);
 
 /**
  * Main class for the SQLite Tools MCP server
@@ -38,72 +45,75 @@ class SqliteToolsServer {
           tools: {
             // Database Management
             open_database: {
-              description: 'Open or create a SQLite database file',
+              description: "Open or create a SQLite database file",
             },
             close_database: {
-              description: 'Close a database connection',
+              description: "Close a database connection",
             },
             list_databases: {
-              description: 'List available database files in a directory',
+              description: "List available database files in a directory",
             },
             database_info: {
-              description: 'Get information about a database',
+              description: "Get information about a database",
             },
 
             // Table Operations
             list_tables: {
-              description: 'List all tables and views in a database',
+              description: "List all tables and views in a database",
             },
             describe_table: {
-              description: 'Get schema information for a table',
+              description: "Get schema information for a table",
             },
             create_table: {
-              description: 'Create a new table with specified columns',
+              description: "Create a new table with specified columns",
             },
             drop_table: {
-              description: 'Permanently delete a table and all its data',
+              description: "Permanently delete a table and all its data",
             },
 
             // Query Operations
             execute_read_query: {
-              description: 'Execute read-only SQL queries (SELECT, PRAGMA, EXPLAIN)',
+              description:
+                "Execute read-only SQL queries (SELECT, PRAGMA, EXPLAIN)",
             },
             execute_write_query: {
-              description: 'Execute SQL that modifies data (INSERT, UPDATE, DELETE)',
+              description:
+                "Execute SQL that modifies data (INSERT, UPDATE, DELETE)",
             },
             execute_schema_query: {
-              description: 'Execute DDL queries (CREATE, ALTER, DROP)',
+              description: "Execute DDL queries (CREATE, ALTER, DROP)",
             },
 
             // Database Maintenance
             backup_database: {
-              description: 'Create a backup copy of a database',
+              description: "Create a backup copy of a database",
             },
             vacuum_database: {
-              description: 'Optimize database storage by reclaiming unused space',
+              description:
+                "Optimize database storage by reclaiming unused space",
             },
           },
         },
-      },
+      }
     );
 
     // Set up error handling
     this.server.onerror = (error) => {
-      console.error('[MCP Error]', error);
+      console.error("[MCP Error]", error);
     };
 
     // Handle process termination
-    process.on('SIGINT', async () => {
+    process.on("SIGINT", async () => {
       await this.cleanup();
       process.exit(0);
     });
 
-    process.on('SIGTERM', async () => {
+    process.on("SIGTERM", async () => {
       await this.cleanup();
       process.exit(0);
     });
 
-    process.on('exit', () => {
+    process.on("exit", () => {
       this.cleanup();
     });
   }
@@ -115,13 +125,13 @@ class SqliteToolsServer {
     try {
       // Close all database connections
       closeAllDatabases();
-      
+
       // Close the server
       await this.server.close();
-      
-      console.error('SQLite Tools MCP server shutdown complete');
+
+      console.error("SQLite Tools MCP server shutdown complete");
     } catch (error) {
-      console.error('Error during cleanup:', error);
+      console.error("Error during cleanup:", error);
     }
   }
 
@@ -133,15 +143,15 @@ class SqliteToolsServer {
       // Load configuration
       const config = get_config();
       console.error(
-        `SQLite Tools MCP server initialized with default path: ${config.SQLITE_DEFAULT_PATH}`,
+        `SQLite Tools MCP server initialized with default path: ${config.SQLITE_DEFAULT_PATH}`
       );
 
       // Register all tools using the unified handler
       registerTools(this.server);
 
-      console.error('All tools registered');
+      console.error("All tools registered");
     } catch (error) {
-      console.error('Failed to initialize server:', error);
+      console.error("Failed to initialize server:", error);
       process.exit(1);
     }
   }
@@ -158,9 +168,9 @@ class SqliteToolsServer {
       const transport = new StdioServerTransport();
       await this.server.connect(transport);
 
-      console.error('SQLite Tools MCP server running on stdio');
+      console.error("SQLite Tools MCP server running on stdio");
     } catch (error) {
-      console.error('Failed to start server:', error);
+      console.error("Failed to start server:", error);
       process.exit(1);
     }
   }
@@ -169,6 +179,6 @@ class SqliteToolsServer {
 // Create and run the server
 const server = new SqliteToolsServer();
 server.run().catch((error) => {
-  console.error('Unhandled error:', error);
+  console.error("Unhandled error:", error);
   process.exit(1);
 });
