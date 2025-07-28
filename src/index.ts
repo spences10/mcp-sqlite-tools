@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-console.error("Starting mcp-sqlite-tools server...");
-
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
@@ -12,11 +10,6 @@ import { closeAllDatabases } from "./clients/sqlite.js";
 import { get_config } from "./config.js";
 import { registerTools } from "./tools/handler.js";
 
-console.error("Importing configuration...");
-console.error("Importing tools handler...");
-console.error("Importing SQLite client...");
-
-console.error("Getting package info...");
 // Get package info for server metadata
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,7 +17,6 @@ const pkg = JSON.parse(
   readFileSync(join(__dirname, "..", "package.json"), "utf8")
 );
 const { name, version } = pkg;
-console.error(`Package: ${name} v${version}`);
 
 /**
  * Main class for the SQLite Tools MCP server

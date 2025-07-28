@@ -17,11 +17,13 @@ build/
 .env.test.local
 .env.production.local
 
-# SQLite databases (optional - uncomment if you don't want to track databases)
-# *.db
-# *.sqlite
-# *.sqlite3
-# databases/
+# SQLite databases (uncomment if you don't want to track databases)
+*.db
+*.sqlite
+*.sqlite3
+databases/
+*.db-wal
+*.db-shm
 
 # Backups
 backups/
