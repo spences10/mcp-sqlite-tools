@@ -1,6 +1,6 @@
 {
   "name": "mcp-sqlite-tools",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "MCP server for local SQLite database operations",
   "type": "module",
   "main": "dist/index.js",
@@ -17,7 +17,10 @@
     "build": "tsc && chmod +x dist/index.js",
     "start": "node dist/index.js",
     "dev": "npx @modelcontextprotocol/inspector dist/index.js",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm run build && changeset publish"
   },
   "keywords": [
     "mcp",
@@ -33,6 +36,7 @@
   "author": "Scott Spence",
   "license": "MIT",
   "devDependencies": {
+    "@changesets/cli": "^2.29.5",
     "@types/better-sqlite3": "^7.6.8",
     "@types/node": "^20.10.0",
     "typescript": "^5.3.0"
