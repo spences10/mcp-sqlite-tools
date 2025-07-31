@@ -45,7 +45,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.0",
     "better-sqlite3": "^9.2.2",
-    "valibot": "^0.42.1",
+    "valibot": "^1.0.0",
     "csv-parser": "^3.2.0",
     "csv-writer": "^1.6.0"
   }
