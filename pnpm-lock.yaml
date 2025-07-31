@@ -12,8 +12,8 @@ importers:
         specifier: ^1.17.0
         version: 1.17.0
       better-sqlite3:
-        specifier: ^9.2.2
-        version: 9.6.0
+        specifier: ^12.0.0
+        version: 12.2.0
       csv-parser:
         specifier: ^3.2.0
         version: 3.2.0
@@ -158,8 +158,9 @@ packages:
     resolution: {integrity: sha512-pbnl5XzGBdrFU/wT4jqmJVPn2B6UHPBOhzMQkY/SPUPB6QtUXtmBHBIwCbXJol93mOpGMnQyP/+BB19q04xj7g==}
     engines: {node: '>=4'}
 
-  better-sqlite3@9.6.0:
-    resolution: {integrity: sha512-yR5HATnqeYNVnkaUTf4bOP2dJSnyhP4puJN/QPRyx4YkBEEUxib422n2XzPqDEHjQQqazoYoADdAm5vE15+dAQ==}
+  better-sqlite3@12.2.0:
+    resolution: {integrity: sha512-eGbYq2CT+tos1fBwLQ/tkBt9J5M3JEHjku4hbvQUePCckkvVf14xWj+1m7dGoK81M/fOjFT7yM9UMeKT/+vFLQ==}
+    engines: {node: 20.x || 22.x || 23.x || 24.x}
 
   bindings@1.5.0:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
@@ -1096,7 +1097,7 @@ snapshots:
     dependencies:
       is-windows: 1.0.2
 
-  better-sqlite3@9.6.0:
+  better-sqlite3@12.2.0:
     dependencies:
       bindings: 1.5.0
       prebuild-install: 7.1.3
