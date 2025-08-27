@@ -1,5 +1,12 @@
 # mcp-sqlite-tools
 
+## 0.0.6
+
+### Patch Changes
+
+- make it work 😅 Returns all tools with complete parameter schemas
+  now
+
 ## 0.0.5
 
 ### Patch Changes
