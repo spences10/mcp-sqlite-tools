@@ -1,55 +1,55 @@
 {
-  "name": "mcp-sqlite-tools",
-  "version": "0.0.5",
-  "description": "MCP server for local SQLite database operations",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "bin": {
-    "mcp-sqlite-tools": "./dist/index.js"
-  },
-  "files": [
-    "dist",
-    "package.json",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "build": "tsc && chmod +x dist/index.js",
-    "start": "node dist/index.js",
-    "dev": "npx @modelcontextprotocol/inspector dist/index.js",
-    "clean": "rm -rf dist",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "changeset": "changeset",
-    "version": "changeset version",
-    "release": "pnpm run build && changeset publish"
-  },
-  "keywords": [
-    "mcp",
-    "model-context-protocol",
-    "sqlite",
-    "database",
-    "sql",
-    "llm",
-    "ai",
-    "local-database",
-    "sqlite3"
-  ],
-  "author": "Scott Spence",
-  "license": "MIT",
-  "devDependencies": {
-    "@changesets/cli": "^2.29.5",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "^24.1.0",
-    "prettier": "^3.6.2",
-    "typescript": "^5.9.2"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.1",
-    "better-sqlite3": "^12.2.0",
-    "csv-parser": "^3.2.0",
-    "csv-writer": "^1.6.0",
-    "valibot": "^1.1.0"
-  }
+	"name": "mcp-sqlite-tools",
+	"version": "0.0.5",
+	"description": "MCP server for local SQLite database operations",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"bin": {
+		"mcp-sqlite-tools": "./dist/index.js"
+	},
+	"files": [
+		"dist",
+		"package.json",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"build": "tsc && chmod +x dist/index.js",
+		"start": "node dist/index.js",
+		"dev": "npx @modelcontextprotocol/inspector dist/index.js",
+		"clean": "rm -rf dist",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"changeset": "changeset",
+		"version": "changeset version",
+		"release": "pnpm run build && changeset publish"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"sqlite",
+		"database",
+		"sql",
+		"llm",
+		"ai",
+		"local-database",
+		"sqlite3"
+	],
+	"author": "Scott Spence",
+	"license": "MIT",
+	"devDependencies": {
+		"@changesets/cli": "^2.29.5",
+		"@types/better-sqlite3": "^7.6.13",
+		"@types/node": "^24.1.0",
+		"prettier": "^3.6.2",
+		"typescript": "^5.9.2"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.17.1",
+		"better-sqlite3": "^12.2.0",
+		"csv-parser": "^3.2.0",
+		"csv-writer": "^1.6.0",
+		"valibot": "^1.1.0"
+	}
 }

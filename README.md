@@ -1,6 +1,10 @@
 # mcp-sqlite-tools
 
-A Model Context Protocol (MCP) server that provides comprehensive SQLite database operations for LLMs. This server enables AI assistants to interact with local SQLite databases safely and efficiently, with built-in security features and clear separation between read-only and destructive operations.
+A Model Context Protocol (MCP) server that provides comprehensive
+SQLite database operations for LLMs. This server enables AI assistants
+to interact with local SQLite databases safely and efficiently, with
+built-in security features and clear separation between read-only and
+destructive operations.
 
 ## Features
 
@@ -9,7 +13,8 @@ A Model Context Protocol (MCP) server that provides comprehensive SQLite databas
 - **Open/Create Database**: Open existing databases or create new ones
 - **Close Database**: Properly close database connections
 - **List Databases**: Discover database files in directories
-- **Database Info**: Get comprehensive database metadata and statistics
+- **Database Info**: Get comprehensive database metadata and
+  statistics
 
 ### 📊 Table Operations
 
@@ -33,10 +38,12 @@ A Model Context Protocol (MCP) server that provides comprehensive SQLite databas
 
 This server implements multiple layers of security:
 
-- **Query Classification**: Automatic separation of read-only, write, and schema operations
+- **Query Classification**: Automatic separation of read-only, write,
+  and schema operations
 - **Path Validation**: Prevents directory traversal attacks
 - **Configurable Path Restrictions**: Control access to absolute paths
-- **Input Validation**: Comprehensive parameter validation using Valibot
+- **Input Validation**: Comprehensive parameter validation using
+  Valibot
 - **Connection Pooling**: Efficient database connection management
 - **Resource Cleanup**: Automatic cleanup on server shutdown
 
@@ -84,18 +91,21 @@ DEBUG=false
 
 #### Option 1: Global User Configuration (Recommended)
 
-Configure once in your VS Code user settings to work across all workspaces. Add this to your global `mcp.json` file (`%APPDATA%\Code\User\mcp.json` on Windows):
+Configure once in your VS Code user settings to work across all
+workspaces. Add this to your global `mcp.json` file
+(`%APPDATA%\Code\User\mcp.json` on Windows):
 
-For VS Code global configuration, edit `~/.config/Code/User/mcp.json` (or equivalent Windows location):
+For VS Code global configuration, edit `~/.config/Code/User/mcp.json`
+(or equivalent Windows location):
 
 ```json
 {
-  "servers": {
-    "sqlite-tools": {
-      "command": "npx",
-      "args": ["-y", "mcp-sqlite-tools"]
-    }
-  }
+	"servers": {
+		"sqlite-tools": {
+			"command": "npx",
+			"args": ["-y", "mcp-sqlite-tools"]
+		}
+	}
 }
 ```
 
@@ -103,46 +113,51 @@ For VS Code global configuration, edit `~/.config/Code/User/mcp.json` (or equiva
 
 ```json
 {
-  "servers": {
-    "sqlite-tools": {
-      "command": "wsl.exe",
-      "args": ["bash", "-c", "npx -y mcp-sqlite-tools"]
-    }
-  }
+	"servers": {
+		"sqlite-tools": {
+			"command": "wsl.exe",
+			"args": ["bash", "-c", "npx -y mcp-sqlite-tools"]
+		}
+	}
 }
 ```
 
 **Benefits:**
 
-- ✅ **One configuration works everywhere** - no per-project setup needed
-- 📁 **Automatically uses current workspace** - databases created in whatever project you have open
+- ✅ **One configuration works everywhere** - no per-project setup
+  needed
+- 📁 **Automatically uses current workspace** - databases created in
+  whatever project you have open
 - 🔄 **Always up to date** - uses latest published version via npx
 
 #### Option 2: Workspace-Specific Configuration
 
-For teams that want to share database configuration via version control, create a `.vscode/mcp.json` file in your workspace:
+For teams that want to share database configuration via version
+control, create a `.vscode/mcp.json` file in your workspace:
 
 ```json
 {
-  "servers": {
-    "sqlite-tools": {
-      "command": "npx",
-      "args": ["-y", "mcp-sqlite-tools"],
-      "env": {
-        "SQLITE_DEFAULT_PATH": "${workspaceFolder}/databases",
-        "SQLITE_ALLOW_ABSOLUTE_PATHS": "true",
-        "SQLITE_BACKUP_PATH": "${workspaceFolder}/backups"
-      }
-    }
-  }
+	"servers": {
+		"sqlite-tools": {
+			"command": "npx",
+			"args": ["-y", "mcp-sqlite-tools"],
+			"env": {
+				"SQLITE_DEFAULT_PATH": "${workspaceFolder}/databases",
+				"SQLITE_ALLOW_ABSOLUTE_PATHS": "true",
+				"SQLITE_BACKUP_PATH": "${workspaceFolder}/backups"
+			}
+		}
+	}
 }
 ```
 
 **Benefits:**
 
 - � **Team sharing** - configuration committed to version control
-- 📂 **Organized structure** - databases in dedicated `/databases` folder
-- �️ **Project isolation** - each project has its own database configuration
+- 📂 **Organized structure** - databases in dedicated `/databases`
+  folder
+- �️ **Project isolation** - each project has its own database
+  configuration
 
 #### Claude Desktop / Cline Configuration
 
@@ -150,24 +165,25 @@ Add this to your MCP client configuration:
 
 ```json
 {
-  "mcpServers": {
-    "mcp-sqlite-tools": {
-      "command": "npx",
-      "args": ["-y", "mcp-sqlite-tools"],
-      "env": {
-        "SQLITE_DEFAULT_PATH": ".",
-        "SQLITE_ALLOW_ABSOLUTE_PATHS": "true",
-        "SQLITE_MAX_QUERY_TIME": "30000",
-        "SQLITE_BACKUP_PATH": "./backups"
-      }
-    }
-  }
+	"mcpServers": {
+		"mcp-sqlite-tools": {
+			"command": "npx",
+			"args": ["-y", "mcp-sqlite-tools"],
+			"env": {
+				"SQLITE_DEFAULT_PATH": ".",
+				"SQLITE_ALLOW_ABSOLUTE_PATHS": "true",
+				"SQLITE_MAX_QUERY_TIME": "30000",
+				"SQLITE_BACKUP_PATH": "./backups"
+			}
+		}
+	}
 }
 ```
 
 ### Environment Variables
 
-The following environment variables can be used to configure the MCP server:
+The following environment variables can be used to configure the MCP
+server:
 
 | Variable                      | Description                                 | Default                       | Example                        |
 | ----------------------------- | ------------------------------------------- | ----------------------------- | ------------------------------ |
@@ -180,7 +196,8 @@ The following environment variables can be used to configure the MCP server:
 
 - Relative paths are resolved from the default path
 - Use `${workspaceFolder}` in VS Code for workspace-relative paths
-- Set `SQLITE_ALLOW_ABSOLUTE_PATHS=true` to enable absolute path operations
+- Set `SQLITE_ALLOW_ABSOLUTE_PATHS=true` to enable absolute path
+  operations
 
 #### Development Configuration
 
@@ -202,14 +219,15 @@ Opens or creates a SQLite database file.
 **Parameters:**
 
 - `path` (string, required): Path to the database file
-- `create` (boolean, optional): Create if doesn't exist (default: true)
+- `create` (boolean, optional): Create if doesn't exist (default:
+  true)
 
 **Example:**
 
 ```json
 {
-  "path": "my-app.db",
-  "create": true
+	"path": "my-app.db",
+	"create": true
 }
 ```
 
@@ -270,11 +288,11 @@ Creates a new table with specified columns.
 
 ```json
 {
-  "name": "column_name",
-  "type": "TEXT|INTEGER|REAL|BLOB",
-  "nullable": true,
-  "primary_key": false,
-  "default_value": null
+	"name": "column_name",
+	"type": "TEXT|INTEGER|REAL|BLOB",
+	"nullable": true,
+	"primary_key": false,
+	"default_value": null
 }
 ```
 
@@ -282,25 +300,25 @@ Creates a new table with specified columns.
 
 ```json
 {
-  "name": "users",
-  "columns": [
-    {
-      "name": "id",
-      "type": "INTEGER",
-      "primary_key": true,
-      "nullable": false
-    },
-    {
-      "name": "name",
-      "type": "TEXT",
-      "nullable": false
-    },
-    {
-      "name": "email",
-      "type": "TEXT",
-      "nullable": true
-    }
-  ]
+	"name": "users",
+	"columns": [
+		{
+			"name": "id",
+			"type": "INTEGER",
+			"primary_key": true,
+			"nullable": false
+		},
+		{
+			"name": "name",
+			"type": "TEXT",
+			"nullable": false
+		},
+		{
+			"name": "email",
+			"type": "TEXT",
+			"nullable": true
+		}
+	]
 }
 ```
 
@@ -329,8 +347,8 @@ Executes read-only SQL queries (SELECT, PRAGMA, EXPLAIN).
 
 ```json
 {
-  "query": "SELECT * FROM users WHERE age > ?",
-  "params": { "1": 21 }
+	"query": "SELECT * FROM users WHERE age > ?",
+	"params": { "1": 21 }
 }
 ```
 
@@ -348,8 +366,8 @@ Executes SQL that modifies data (INSERT, UPDATE, DELETE).
 
 ```json
 {
-  "query": "INSERT INTO users (name, email) VALUES (?, ?)",
-  "params": { "1": "John Doe", "2": "john@example.com" }
+	"query": "INSERT INTO users (name, email) VALUES (?, ?)",
+	"params": { "1": "John Doe", "2": "john@example.com" }
 }
 ```
 
@@ -372,7 +390,8 @@ Creates a backup copy of a database.
 **Parameters:**
 
 - `source_database` (string, optional): Source database path
-- `backup_path` (string, optional): Backup file path (auto-generated if not provided)
+- `backup_path` (string, optional): Backup file path (auto-generated
+  if not provided)
 
 #### `vacuum_database`
 
@@ -425,8 +444,10 @@ pnpm run clean
 The server is built with a modular architecture:
 
 - **`src/index.ts`**: Main server entry point
-- **`src/config.ts`**: Configuration management with Valibot validation
-- **`src/clients/sqlite.ts`**: SQLite database client using better-sqlite3
+- **`src/config.ts`**: Configuration management with Valibot
+  validation
+- **`src/clients/sqlite.ts`**: SQLite database client using
+  better-sqlite3
 - **`src/tools/handler.ts`**: Unified tool request handler
 - **`src/tools/context.ts`**: Database context management
 - **`src/common/types.ts`**: TypeScript type definitions
@@ -434,11 +455,15 @@ The server is built with a modular architecture:
 
 ## Dependencies
 
-- **[@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk)**: MCP framework
-- **[better-sqlite3](https://github.com/WiseLibs/better-sqlite3)**: High-performance SQLite driver
+- **[@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk)**:
+  MCP framework
+- **[better-sqlite3](https://github.com/WiseLibs/better-sqlite3)**:
+  High-performance SQLite driver
 - **[valibot](https://valibot.dev/)**: Lightweight validation library
-- **[csv-parser](https://github.com/mafintosh/csv-parser)**: CSV parsing (future feature)
-- **[csv-writer](https://github.com/ryu1kn/csv-writer)**: CSV writing (future feature)
+- **[csv-parser](https://github.com/mafintosh/csv-parser)**: CSV
+  parsing (future feature)
+- **[csv-writer](https://github.com/ryu1kn/csv-writer)**: CSV writing
+  (future feature)
 
 ## Contributing
 
@@ -450,6 +475,9 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-- Built on the [Model Context Protocol](https://github.com/modelcontextprotocol)
-- Inspired by [mcp-turso-cloud](https://github.com/spences10/mcp-turso-cloud)
-- Uses [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) for high-performance SQLite operations
+- Built on the
+  [Model Context Protocol](https://github.com/modelcontextprotocol)
+- Inspired by
+  [mcp-turso-cloud](https://github.com/spences10/mcp-turso-cloud)
+- Uses [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
+  for high-performance SQLite operations

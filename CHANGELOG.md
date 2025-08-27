@@ -10,13 +10,15 @@
 
 ### Patch Changes
 
-- fix: update default SQLite configuration paths for improved usability
+- fix: update default SQLite configuration paths for improved
+  usability
 
 ## 0.0.3
 
 ### Patch Changes
 
-- feat: add pnpm workspace configuration and enhance logging in SQLite Tools MCP server
+- feat: add pnpm workspace configuration and enhance logging in SQLite
+  Tools MCP server
 
 ## 0.0.2
 
