@@ -19,6 +19,8 @@
     "start": "node dist/index.js",
     "dev": "npx @modelcontextprotocol/inspector dist/index.js",
     "clean": "rm -rf dist",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm run build && changeset publish"
@@ -40,13 +42,14 @@
     "@changesets/cli": "^2.29.5",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.1.0",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.2"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.1",
     "better-sqlite3": "^12.2.0",
-    "valibot": "^1.1.0",
     "csv-parser": "^3.2.0",
-    "csv-writer": "^1.6.0"
+    "csv-writer": "^1.6.0",
+    "valibot": "^1.1.0"
   }
 }
