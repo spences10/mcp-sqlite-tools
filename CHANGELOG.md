@@ -1,5 +1,12 @@
 # mcp-sqlite-tools
 
+## 0.0.9
+
+### Patch Changes
+
+- 30ded50: remove static tool definitions to avoid conflicts with
+  dynamic registration
+
 ## 0.0.8
 
 ### Patch Changes
