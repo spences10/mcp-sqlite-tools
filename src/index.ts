@@ -34,6 +34,10 @@ class SqliteToolsServer {
 			{
 				capabilities: {
 					resources: {},
+					// TODO: Remove this static tool definition - it duplicates the dynamic
+					// registration in src/tools/handler.ts. The dynamic registration is more
+					// complete and handles the actual tool implementation. This static definition
+					// may be causing conflicts and should be removed in favor of the dynamic one.
 					tools: {
 						// Database Management
 						open_database: {
@@ -167,6 +171,12 @@ class SqliteToolsServer {
 														'Is primary key (default: false)',
 												},
 												default_value: {
+													type: [
+														'string',
+														'number',
+														'boolean',
+														'null',
+													],
 													description: 'Default value for the column',
 												},
 											},

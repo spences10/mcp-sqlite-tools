@@ -224,6 +224,7 @@ export function registerTools(server: Server): void {
 										description: 'Is primary key (default: false)',
 									},
 									default_value: {
+										type: ['string', 'number', 'boolean', 'null'],
 										description: 'Default value for the column',
 									},
 								},
