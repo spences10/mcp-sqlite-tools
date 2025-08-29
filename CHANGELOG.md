@@ -1,5 +1,12 @@
 # mcp-sqlite-tools
 
+## 0.0.8
+
+### Patch Changes
+
+- 28f3280: enhance tool registration by removing static definitions
+  and updating default value types
+
 ## 0.0.7
 
 ### Patch Changes
