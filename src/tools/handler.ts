@@ -1,11 +1,7 @@
 /**
  * Unified tool handler for the SQLite Tools MCP server
  */
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import {
-	CallToolRequestSchema,
-	ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { McpServer } from 'tmcp';
 import * as v from 'valibot';
 import * as sqlite from '../clients/sqlite.js';
 import { formatError } from '../common/errors.js';
@@ -55,349 +51,29 @@ const ListDatabasesSchema = v.object({
 	directory: v.optional(v.string()),
 });
 
-/**
- * Validate input using Valibot schema
- */
-function validateInput<T>(
-	schema: v.BaseSchema<any, T, any>,
-	input: unknown,
-): T {
-	try {
-		return v.parse(schema, input);
-	} catch (error) {
-		if (error instanceof v.ValiError) {
-			const issues = error.issues
-				.map(
-					(issue: any) =>
-						`${issue.path?.map((p: any) => p.key).join('.')}: ${issue.message}`,
-				)
-				.join(', ');
-			throw new Error(`Validation failed: ${issues}`);
-		}
-		throw error;
-	}
-}
+const DatabaseOnlySchema = v.object({
+	database: v.optional(v.string()),
+});
+
+const DropTableSchema = v.object({
+	table: v.pipe(v.string(), v.minLength(1)),
+	database: v.optional(v.string()),
+});
 
 /**
  * Register all tools with the server
  */
-export function registerTools(server: Server): void {
-	// Register the list of available tools
-	server.setRequestHandler(ListToolsRequestSchema, async () => ({
-		tools: [
-			// Database Management Tools
-			{
-				name: 'open_database',
-				description: '✓ SAFE: Open or create a SQLite database file',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						path: {
-							type: 'string',
-							description:
-								'Path to the database file (relative to default directory or absolute if allowed)',
-						},
-						create: {
-							type: 'boolean',
-							description:
-								'Create the database if it does not exist (default: true)',
-						},
-					},
-					required: ['path'],
-				},
-			},
-			{
-				name: 'close_database',
-				description: '✓ SAFE: Close a database connection',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						database: {
-							type: 'string',
-							description:
-								'Database path to close (optional, uses context if not provided)',
-						},
-					},
-					required: [],
-				},
-			},
-			{
-				name: 'list_databases',
-				description:
-					'✓ SAFE: List available database files in a directory',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						directory: {
-							type: 'string',
-							description:
-								'Directory to search for database files (optional, uses default directory)',
-						},
-					},
-					required: [],
-				},
-			},
-			{
-				name: 'database_info',
-				description:
-					'✓ SAFE: Get information about a database (size, tables, etc.)',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						database: {
-							type: 'string',
-							description:
-								'Database path (optional, uses context if not provided)',
-						},
-					},
-					required: [],
-				},
-			},
-
-			// Table Operations
-			{
-				name: 'list_tables',
-				description:
-					'✓ SAFE: List all tables and views in a database',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						database: {
-							type: 'string',
-							description:
-								'Database path (optional, uses context if not provided)',
-						},
-					},
-					required: [],
-				},
-			},
-			{
-				name: 'describe_table',
-				description: '✓ SAFE: Get schema information for a table',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						table: {
-							type: 'string',
-							description: 'Table name to describe',
-						},
-						database: {
-							type: 'string',
-							description:
-								'Database path (optional, uses context if not provided)',
-						},
-					},
-					required: ['table'],
-				},
-			},
-			{
-				name: 'create_table',
-				description:
-					'⚠️ SCHEMA CHANGE: Create a new table with specified columns',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						name: {
-							type: 'string',
-							description: 'Table name',
-						},
-						columns: {
-							type: 'array',
-							items: {
-								type: 'object',
-								properties: {
-									name: {
-										type: 'string',
-										description: 'Column name',
-									},
-									type: {
-										type: 'string',
-										description:
-											'SQLite data type (TEXT, INTEGER, REAL, BLOB)',
-									},
-									nullable: {
-										type: 'boolean',
-										description: 'Allow NULL values (default: true)',
-									},
-									primary_key: {
-										type: 'boolean',
-										description: 'Is primary key (default: false)',
-									},
-									default_value: {
-										type: ['string', 'number', 'boolean', 'null'],
-										description: 'Default value for the column',
-									},
-								},
-								required: ['name', 'type'],
-							},
-							description: 'Column definitions',
-						},
-						database: {
-							type: 'string',
-							description:
-								'Database path (optional, uses context if not provided)',
-						},
-					},
-					required: ['name', 'columns'],
-				},
-			},
-			{
-				name: 'drop_table',
-				description:
-					'⚠️ DESTRUCTIVE: Permanently delete a table and all its data',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						table: {
-							type: 'string',
-							description:
-								'Table name to delete - WARNING: ALL DATA WILL BE LOST',
-						},
-						database: {
-							type: 'string',
-							description:
-								'Database path (optional, uses context if not provided)',
-						},
-					},
-					required: ['table'],
-				},
-			},
-
-			// Query Operations
-			{
-				name: 'execute_read_query',
-				description:
-					'✓ SAFE: Execute read-only SQL queries (SELECT, PRAGMA, EXPLAIN)',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						query: {
-							type: 'string',
-							description:
-								'Read-only SQL query (SELECT, PRAGMA, EXPLAIN only)',
-						},
-						params: {
-							type: 'object',
-							description:
-								'Query parameters for parameterized queries',
-						},
-						database: {
-							type: 'string',
-							description:
-								'Database path (optional, uses context if not provided)',
-						},
-					},
-					required: ['query'],
-				},
-			},
-			{
-				name: 'execute_write_query',
-				description:
-					'⚠️ DESTRUCTIVE: Execute SQL that modifies data (INSERT, UPDATE, DELETE)',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						query: {
-							type: 'string',
-							description:
-								'SQL query that modifies data - Use with caution',
-						},
-						params: {
-							type: 'object',
-							description:
-								'Query parameters for parameterized queries',
-						},
-						database: {
-							type: 'string',
-							description:
-								'Database path (optional, uses context if not provided)',
-						},
-					},
-					required: ['query'],
-				},
-			},
-			{
-				name: 'execute_schema_query',
-				description:
-					'⚠️ SCHEMA CHANGE: Execute DDL queries (CREATE, ALTER, DROP)',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						query: {
-							type: 'string',
-							description:
-								'DDL SQL query (CREATE, ALTER, DROP) - Changes database structure',
-						},
-						params: {
-							type: 'object',
-							description:
-								'Query parameters for parameterized queries',
-						},
-						database: {
-							type: 'string',
-							description:
-								'Database path (optional, uses context if not provided)',
-						},
-					},
-					required: ['query'],
-				},
-			},
-
-			// Database Maintenance
-			{
-				name: 'backup_database',
-				description: '✓ SAFE: Create a backup copy of a database',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						source_database: {
-							type: 'string',
-							description:
-								'Source database path (optional, uses context if not provided)',
-						},
-						backup_path: {
-							type: 'string',
-							description:
-								'Backup file path (optional, auto-generated if not provided)',
-						},
-					},
-					required: [],
-				},
-			},
-			{
-				name: 'vacuum_database',
-				description:
-					'✓ MAINTENANCE: Optimize database storage by reclaiming unused space',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						database: {
-							type: 'string',
-							description:
-								'Database path (optional, uses context if not provided)',
-						},
-					},
-					required: [],
-				},
-			},
-		],
-	}));
-
-	// Register the unified tool handler
-	server.setRequestHandler(CallToolRequestSchema, async (request) => {
-		try {
-			debug_log(
-				'Executing tool:',
-				request.params.name,
-				request.params.arguments,
-			);
-
-			// Database Management Tools
-			if (request.params.name === 'open_database') {
-				const { path, create } = validateInput(
-					OpenDatabaseSchema,
-					request.params.arguments,
-				);
+export function registerTools(server: McpServer<any>): void {
+	// Database Management Tools
+	server.tool<typeof OpenDatabaseSchema>(
+		{
+			name: 'open_database',
+			description: '✓ SAFE: Open or create a SQLite database file',
+			schema: OpenDatabaseSchema,
+		},
+		async ({ path, create }) => {
+			try {
+				debug_log('Executing tool: open_database', { path, create });
 
 				const db = sqlite.openDatabase(path, create);
 				setCurrentDatabase(path);
@@ -407,7 +83,7 @@ export function registerTools(server: Server): void {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									success: true,
@@ -420,20 +96,44 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
-			}
-
-			if (request.params.name === 'close_database') {
-				const { database } = request.params.arguments as {
-					database?: string;
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
 				};
-				const databasePath = resolveDatabaseName(database);
+			}
+		},
+	);
 
+	server.tool<typeof DatabaseOnlySchema>(
+		{
+			name: 'close_database',
+			description: '✓ SAFE: Close a database connection',
+			schema: DatabaseOnlySchema,
+		},
+		async ({ database }) => {
+			try {
+				debug_log('Executing tool: close_database', { database });
+
+				const databasePath = resolveDatabaseName(database);
 				sqlite.closeDatabase(databasePath);
 
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									success: true,
@@ -445,19 +145,42 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
-			}
-
-			if (request.params.name === 'list_databases') {
-				const { directory } = validateInput(
-					ListDatabasesSchema,
-					request.params.arguments,
-				);
-
-				// This would need to be implemented to scan for .db files
+			} catch (error) {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
+				};
+			}
+		},
+	);
+
+	server.tool<typeof ListDatabasesSchema>(
+		{
+			name: 'list_databases',
+			description:
+				'✓ SAFE: List available database files in a directory',
+			schema: ListDatabasesSchema,
+		},
+		async ({ directory }) => {
+			try {
+				debug_log('Executing tool: list_databases', { directory });
+
+				return {
+					content: [
+						{
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									message:
@@ -470,20 +193,45 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
-			}
-
-			if (request.params.name === 'database_info') {
-				const { database } = request.params.arguments as {
-					database?: string;
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
 				};
-				const databasePath = resolveDatabaseName(database);
+			}
+		},
+	);
 
+	server.tool<typeof DatabaseOnlySchema>(
+		{
+			name: 'database_info',
+			description:
+				'✓ SAFE: Get information about a database (size, tables, etc.)',
+			schema: DatabaseOnlySchema,
+		},
+		async ({ database }) => {
+			try {
+				debug_log('Executing tool: database_info', { database });
+
+				const databasePath = resolveDatabaseName(database);
 				const info = sqlite.getDatabaseInfo(databasePath);
 
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									database: databasePath,
@@ -495,15 +243,39 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
-			}
-
-			// Table Operations
-			if (request.params.name === 'list_tables') {
-				const { database } = request.params.arguments as {
-					database?: string;
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
 				};
-				const databasePath = resolveDatabaseName(database);
+			}
+		},
+	);
 
+	// Table Operations
+	server.tool<typeof DatabaseOnlySchema>(
+		{
+			name: 'list_tables',
+			description: '✓ SAFE: List all tables and views in a database',
+			schema: DatabaseOnlySchema,
+		},
+		async ({ database }) => {
+			try {
+				debug_log('Executing tool: list_tables', { database });
+
+				const databasePath = resolveDatabaseName(database);
 				if (database) setCurrentDatabase(database);
 
 				const tables = sqlite.listTables(databasePath);
@@ -511,7 +283,7 @@ export function registerTools(server: Server): void {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									database: databasePath,
@@ -523,15 +295,41 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
+				};
 			}
+		},
+	);
 
-			if (request.params.name === 'describe_table') {
-				const { table, database } = validateInput(
-					DescribeTableSchema,
-					request.params.arguments,
-				);
+	server.tool<typeof DescribeTableSchema>(
+		{
+			name: 'describe_table',
+			description: '✓ SAFE: Get schema information for a table',
+			schema: DescribeTableSchema,
+		},
+		async ({ table, database }) => {
+			try {
+				debug_log('Executing tool: describe_table', {
+					table,
+					database,
+				});
+
 				const databasePath = resolveDatabaseName(database);
-
 				if (database) setCurrentDatabase(database);
 
 				const columns = sqlite.describeTable(databasePath, table);
@@ -539,7 +337,7 @@ export function registerTools(server: Server): void {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									database: databasePath,
@@ -558,15 +356,43 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
+				};
 			}
+		},
+	);
 
-			if (request.params.name === 'create_table') {
-				const { name, columns, database } = validateInput(
-					CreateTableSchema,
-					request.params.arguments,
-				);
+	server.tool<typeof CreateTableSchema>(
+		{
+			name: 'create_table',
+			description:
+				'⚠️ SCHEMA CHANGE: Create a new table with specified columns',
+			schema: CreateTableSchema,
+		},
+		async ({ name, columns, database }) => {
+			try {
+				debug_log('Executing tool: create_table', {
+					name,
+					columns,
+					database,
+				});
+
 				const databasePath = resolveDatabaseName(database);
-
 				if (database) setCurrentDatabase(database);
 
 				// Build CREATE TABLE SQL
@@ -587,7 +413,7 @@ export function registerTools(server: Server): void {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									success: true,
@@ -602,15 +428,39 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
-			}
-
-			if (request.params.name === 'drop_table') {
-				const { table, database } = request.params.arguments as {
-					table: string;
-					database?: string;
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
 				};
-				const databasePath = resolveDatabaseName(database);
+			}
+		},
+	);
 
+	server.tool<typeof DropTableSchema>(
+		{
+			name: 'drop_table',
+			description:
+				'⚠️ DESTRUCTIVE: Permanently delete a table and all its data',
+			schema: DropTableSchema,
+		},
+		async ({ table, database }) => {
+			try {
+				debug_log('Executing tool: drop_table', { table, database });
+
+				const databasePath = resolveDatabaseName(database);
 				if (database) setCurrentDatabase(database);
 
 				const dropSql = `DROP TABLE ${table}`;
@@ -619,7 +469,7 @@ export function registerTools(server: Server): void {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									success: true,
@@ -634,20 +484,44 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
+				};
 			}
+		},
+	);
 
-			// Query Operations
-			if (request.params.name === 'execute_read_query') {
-				const {
+	// Query Operations
+	server.tool<typeof ExecuteQuerySchema>(
+		{
+			name: 'execute_read_query',
+			description:
+				'✓ SAFE: Execute read-only SQL queries (SELECT, PRAGMA, EXPLAIN)',
+			schema: ExecuteQuerySchema,
+		},
+		async ({ query, params = {}, database }) => {
+			try {
+				debug_log('Executing tool: execute_read_query', {
 					query,
-					params = {},
+					params,
 					database,
-				} = validateInput(
-					ExecuteQuerySchema,
-					request.params.arguments,
-				);
-				const databasePath = resolveDatabaseName(database);
+				});
 
+				const databasePath = resolveDatabaseName(database);
 				if (database) setCurrentDatabase(database);
 
 				// Validate that this is a read-only query
@@ -666,7 +540,7 @@ export function registerTools(server: Server): void {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									database: databasePath,
@@ -679,19 +553,43 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
+				};
 			}
+		},
+	);
 
-			if (request.params.name === 'execute_write_query') {
-				const {
+	server.tool<typeof ExecuteQuerySchema>(
+		{
+			name: 'execute_write_query',
+			description:
+				'⚠️ DESTRUCTIVE: Execute SQL that modifies data (INSERT, UPDATE, DELETE)',
+			schema: ExecuteQuerySchema,
+		},
+		async ({ query, params = {}, database }) => {
+			try {
+				debug_log('Executing tool: execute_write_query', {
 					query,
-					params = {},
+					params,
 					database,
-				} = validateInput(
-					ExecuteQuerySchema,
-					request.params.arguments,
-				);
-				const databasePath = resolveDatabaseName(database);
+				});
 
+				const databasePath = resolveDatabaseName(database);
 				if (database) setCurrentDatabase(database);
 
 				// Validate that this is not a read-only query and not a schema query
@@ -715,7 +613,7 @@ export function registerTools(server: Server): void {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									database: databasePath,
@@ -728,19 +626,43 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
+				};
 			}
+		},
+	);
 
-			if (request.params.name === 'execute_schema_query') {
-				const {
+	server.tool<typeof ExecuteQuerySchema>(
+		{
+			name: 'execute_schema_query',
+			description:
+				'⚠️ SCHEMA CHANGE: Execute DDL queries (CREATE, ALTER, DROP)',
+			schema: ExecuteQuerySchema,
+		},
+		async ({ query, params = {}, database }) => {
+			try {
+				debug_log('Executing tool: execute_schema_query', {
 					query,
-					params = {},
+					params,
 					database,
-				} = validateInput(
-					ExecuteQuerySchema,
-					request.params.arguments,
-				);
-				const databasePath = resolveDatabaseName(database);
+				});
 
+				const databasePath = resolveDatabaseName(database);
 				if (database) setCurrentDatabase(database);
 
 				// Validate that this is a schema query
@@ -759,7 +681,7 @@ export function registerTools(server: Server): void {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									database: databasePath,
@@ -772,14 +694,41 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
+				};
 			}
+		},
+	);
 
-			// Database Maintenance
-			if (request.params.name === 'backup_database') {
-				const { source_database, backup_path } = validateInput(
-					BackupDatabaseSchema,
-					request.params.arguments,
-				);
+	// Database Maintenance
+	server.tool<typeof BackupDatabaseSchema>(
+		{
+			name: 'backup_database',
+			description: '✓ SAFE: Create a backup copy of a database',
+			schema: BackupDatabaseSchema,
+		},
+		async ({ source_database, backup_path }) => {
+			try {
+				debug_log('Executing tool: backup_database', {
+					source_database,
+					backup_path,
+				});
+
 				const sourcePath = resolveDatabaseName(source_database);
 
 				const backupInfo = sqlite.backupDatabase(
@@ -790,7 +739,7 @@ export function registerTools(server: Server): void {
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									success: true,
@@ -802,20 +751,45 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
-			}
-
-			if (request.params.name === 'vacuum_database') {
-				const { database } = request.params.arguments as {
-					database?: string;
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
 				};
-				const databasePath = resolveDatabaseName(database);
+			}
+		},
+	);
 
+	server.tool<typeof DatabaseOnlySchema>(
+		{
+			name: 'vacuum_database',
+			description:
+				'✓ MAINTENANCE: Optimize database storage by reclaiming unused space',
+			schema: DatabaseOnlySchema,
+		},
+		async ({ database }) => {
+			try {
+				debug_log('Executing tool: vacuum_database', { database });
+
+				const databasePath = resolveDatabaseName(database);
 				sqlite.vacuumDatabase(databasePath);
 
 				return {
 					content: [
 						{
-							type: 'text',
+							type: 'text' as const,
 							text: JSON.stringify(
 								{
 									success: true,
@@ -828,21 +802,24 @@ export function registerTools(server: Server): void {
 						},
 					],
 				};
+			} catch (error) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: JSON.stringify(
+								{
+									error: 'execution_error',
+									message: formatError(error),
+								},
+								null,
+								2,
+							),
+						},
+					],
+					isError: true,
+				};
 			}
-
-			// If we get here, it's not a recognized tool
-			throw new Error(`Unknown tool: ${request.params.name}`);
-		} catch (error) {
-			console.error('Error executing tool:', error);
-			return {
-				content: [
-					{
-						type: 'text',
-						text: `Error: ${formatError(error)}`,
-					},
-				],
-				isError: true,
-			};
-		}
-	});
+		},
+	);
 }

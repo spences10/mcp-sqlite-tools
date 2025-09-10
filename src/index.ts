@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { ValibotJsonSchemaAdapter } from '@tmcp/adapter-valibot';
+import { StdioTransport } from '@tmcp/transport-stdio';
+import { McpServer } from 'tmcp';
 
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -22,29 +23,28 @@ const { name, version } = pkg;
  * Main class for the SQLite Tools MCP server
  */
 class SqliteToolsServer {
-	private server: Server;
+	private server: McpServer<any>;
+	private adapter: ValibotJsonSchemaAdapter;
 
 	constructor() {
+		// Initialize the adapter
+		this.adapter = new ValibotJsonSchemaAdapter();
+
 		// Initialize the server with metadata
-		this.server = new Server(
+		this.server = new McpServer<any>(
 			{
 				name,
 				version,
+				description:
+					'MCP server for local SQLite database operations',
 			},
 			{
+				adapter: this.adapter,
 				capabilities: {
-					resources: {},
-					// Declare support for tools - actual tool definitions are registered
-					// dynamically in src/tools/handler.ts using setRequestHandler()
-					tools: {},
+					tools: { listChanged: true },
 				},
 			},
 		);
-
-		// Set up error handling
-		this.server.onerror = (error) => {
-			console.error('[MCP Error]', error);
-		};
 
 		// Handle process termination
 		process.on('SIGINT', async () => {
@@ -69,9 +69,6 @@ class SqliteToolsServer {
 		try {
 			// Close all database connections
 			closeAllDatabases();
-
-			// Close the server
-			await this.server.close();
 
 			console.error('SQLite Tools MCP server shutdown complete');
 		} catch (error) {
@@ -108,9 +105,9 @@ class SqliteToolsServer {
 			// Initialize the server
 			await this.initialize();
 
-			// Connect to the transport
-			const transport = new StdioServerTransport();
-			await this.server.connect(transport);
+			// Setup transport
+			const transport = new StdioTransport(this.server);
+			transport.listen();
 
 			console.error('SQLite Tools MCP server running on stdio');
 		} catch (error) {
