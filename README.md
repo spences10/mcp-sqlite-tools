@@ -3,8 +3,8 @@
 A Model Context Protocol (MCP) server that provides comprehensive
 SQLite database operations for LLMs. This server enables AI assistants
 to interact with local SQLite databases safely and efficiently, with
-built-in security features and clear separation between read-only and
-destructive operations.
+built-in security features, advanced transaction support, and clear
+separation between read-only and destructive operations.
 
 ## Features
 
@@ -28,24 +28,48 @@ destructive operations.
 - **Execute Read Query**: Safe SELECT, PRAGMA, and EXPLAIN queries
 - **Execute Write Query**: INSERT, UPDATE, DELETE operations
 - **Execute Schema Query**: DDL operations (CREATE, ALTER, DROP)
+- **Bulk Insert**: Efficient batch insertion of multiple records
+
+### 💾 Transaction Management
+
+- **Begin Transaction**: Start database transactions with savepoint
+  support
+- **Commit Transaction**: Commit changes with nested transaction
+  handling
+- **Rollback Transaction**: Safely rollback changes and nested
+  savepoints
+- **Auto-cleanup**: Automatic cleanup of stale transactions
+
+### 📋 Schema Operations
+
+- **Export Schema**: Export database schema to SQL or JSON format
+- **Import Schema**: Import and execute schema from SQL or JSON
+- **Selective Export**: Export specific tables or entire database
+  structure
 
 ### 🛠️ Database Maintenance
 
 - **Backup Database**: Create database backups with timestamps
 - **Vacuum Database**: Optimize database storage and performance
+- **Connection Pooling**: Advanced connection management with health
+  monitoring
 
 ## ⚠️ Security Features
 
 This server implements multiple layers of security:
 
 - **Query Classification**: Automatic separation of read-only, write,
-  and schema operations
+  schema, and transaction operations
 - **Path Validation**: Prevents directory traversal attacks
 - **Configurable Path Restrictions**: Control access to absolute paths
 - **Input Validation**: Comprehensive parameter validation using
   Valibot
-- **Connection Pooling**: Efficient database connection management
-- **Resource Cleanup**: Automatic cleanup on server shutdown
+- **Advanced Connection Pooling**: Connection limits, health
+  monitoring, and idle timeout
+- **Transaction Safety**: Automatic stale transaction cleanup and
+  nested savepoint support
+- **Resource Cleanup**: Graceful cleanup on server shutdown with
+  maintenance scheduling
 
 ## Installation
 
@@ -381,6 +405,91 @@ Executes DDL queries (CREATE, ALTER, DROP).
 - `params` (object, optional): Query parameters
 - `database` (string, optional): Database path
 
+#### `bulk_insert`
+
+Insert multiple records in batches.
+
+**Parameters:**
+
+- `table` (string, required): Target table name
+- `data` (array, required): Array of objects to insert
+- `batch_size` (number, optional): Records per batch (default: 1000)
+- `database` (string, optional): Database path
+
+**Example:**
+
+```json
+{
+	"table": "users",
+	"data": [
+		{ "name": "John Doe", "email": "john@example.com" },
+		{ "name": "Jane Smith", "email": "jane@example.com" }
+	],
+	"batch_size": 500
+}
+```
+
+### Transaction Management
+
+#### `begin_transaction`
+
+Start a database transaction with optional savepoint support.
+
+**Parameters:**
+
+- `database` (string, optional): Database path
+
+**Returns:** Transaction ID for tracking
+
+#### `commit_transaction`
+
+Commit the current transaction or release a savepoint.
+
+**Parameters:**
+
+- `database` (string, optional): Database path
+
+#### `rollback_transaction`
+
+Rollback the current transaction or revert to a savepoint.
+
+**Parameters:**
+
+- `database` (string, optional): Database path
+
+### Schema Operations
+
+#### `export_schema`
+
+Export database schema to SQL or JSON format.
+
+**Parameters:**
+
+- `database` (string, optional): Database path
+- `format` (string, optional): Output format - "sql" or "json"
+  (default: "sql")
+- `tables` (array, optional): Specific tables to export
+
+**Example:**
+
+```json
+{
+	"format": "json",
+	"tables": ["users", "orders"]
+}
+```
+
+#### `import_schema`
+
+Import and execute schema from SQL or JSON.
+
+**Parameters:**
+
+- `database` (string, optional): Database path
+- `schema` (string, required): Schema content to import
+- `format` (string, optional): Input format - "sql" or "json"
+  (default: "sql")
+
 ### Database Maintenance
 
 #### `backup_database`
@@ -403,21 +512,31 @@ Optimizes database storage by reclaiming unused space.
 
 ## Safety Guidelines
 
-### Query Classification
+### Tool Classification
 
-The server automatically classifies queries into three categories:
+The server automatically classifies tools into safety categories:
 
-1. **✓ SAFE**: Read-only operations (SELECT, PRAGMA, EXPLAIN)
-2. **⚠️ DESTRUCTIVE**: Data modification (INSERT, UPDATE, DELETE)
-3. **⚠️ SCHEMA CHANGE**: Structure modification (CREATE, ALTER, DROP)
+1. **✓ SAFE**: Read-only operations (SELECT, PRAGMA, EXPLAIN, database
+   info, backups)
+2. **⚠️ DESTRUCTIVE**: Data modification (INSERT, UPDATE, DELETE, bulk
+   insert)
+3. **⚠️ SCHEMA CHANGE**: Structure modification (CREATE, ALTER, DROP,
+   schema import)
+4. **⚠️ TRANSACTION**: Transaction control (BEGIN, COMMIT, ROLLBACK)
+5. **✓ MAINTENANCE**: Optimization operations (VACUUM, connection
+   management)
 
 ### Best Practices
 
 1. **Always use parameterized queries** to prevent SQL injection
-2. **Review destructive operations** before execution
-3. **Create backups** before major schema changes
-4. **Use appropriate query tools** for different operation types
-5. **Validate input data** before database operations
+2. **Use transactions** for multi-step operations to ensure data
+   consistency
+3. **Review destructive operations** before execution
+4. **Create backups** before major schema changes
+5. **Use bulk_insert** for inserting large datasets efficiently
+6. **Export schemas** before major structural changes
+7. **Use appropriate tools** for different operation types
+8. **Monitor connection pool** usage in high-traffic scenarios
 
 ## Development
 
@@ -443,27 +562,70 @@ pnpm run clean
 
 The server is built with a modular architecture:
 
+### Core Modules
+
 - **`src/index.ts`**: Main server entry point
 - **`src/config.ts`**: Configuration management with Valibot
   validation
-- **`src/clients/sqlite.ts`**: SQLite database client using
-  better-sqlite3
-- **`src/tools/handler.ts`**: Unified tool request handler
+
+### Database Clients
+
+- **`src/clients/connection-manager.ts`**: Advanced connection pooling
+  with health monitoring
+- **`src/clients/query-executor.ts`**: SQL execution, bulk operations,
+  and query utilities
+- **`src/clients/transaction-manager.ts`**: ACID transaction
+  management with savepoints
+- **`src/clients/schema-manager.ts`**: Schema export/import
+  functionality
+- **`src/clients/sqlite.ts`**: Main SQLite client interface and
+  utilities
+
+### Tool Handlers
+
+- **`src/tools/handler.ts`**: Tool registration orchestrator
+- **`src/tools/admin-tools.ts`**: Database and table management tools
+- **`src/tools/query-tools.ts`**: Query execution and bulk operation
+  tools
+- **`src/tools/transaction-tools.ts`**: Transaction management tools
+- **`src/tools/schema-tools.ts`**: Schema export/import tools
 - **`src/tools/context.ts`**: Database context management
+
+### Common Utilities
+
 - **`src/common/types.ts`**: TypeScript type definitions
 - **`src/common/errors.ts`**: Error handling utilities
 
+This modular design provides:
+
+- **Separation of Concerns**: Each module has a single responsibility
+- **Maintainability**: Easy to test, debug, and extend individual
+  components
+- **Scalability**: New features can be added without affecting
+  existing code
+- **Type Safety**: Comprehensive TypeScript coverage throughout
+
 ## Dependencies
 
-- **[@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk)**:
-  MCP framework
+- **[tmcp](https://github.com/modelcontextprotocol/typescript-sdk)**:
+  Modern TypeScript MCP framework
 - **[better-sqlite3](https://github.com/WiseLibs/better-sqlite3)**:
   High-performance SQLite driver
 - **[valibot](https://valibot.dev/)**: Lightweight validation library
+  for type-safe inputs
 - **[csv-parser](https://github.com/mafintosh/csv-parser)**: CSV
-  parsing (future feature)
-- **[csv-writer](https://github.com/ryu1kn/csv-writer)**: CSV writing
-  (future feature)
+  parsing capabilities
+- **[csv-writer](https://github.com/ryu1kn/csv-writer)**: CSV export
+  functionality
+
+### Key Features Provided by Dependencies
+
+- **tmcp**: Streamlined MCP server development with excellent
+  TypeScript support
+- **better-sqlite3**: Synchronous SQLite operations with superior
+  performance
+- **valibot**: Runtime type validation for all tool parameters
+- **csv-\***: Future-ready for CSV import/export capabilities
 
 ## Contributing
 

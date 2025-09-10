@@ -1,7 +1,6 @@
 /**
  * SQLite database client using better-sqlite3
  */
-import Database from 'better-sqlite3';
 import {
 	copyFileSync,
 	existsSync,
@@ -9,277 +8,48 @@ import {
 	readdirSync,
 	statSync,
 } from 'node:fs';
-import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import {
-	DatabaseConnectionError,
-	PathSecurityError,
 	convert_sqlite_error,
 	with_error_handling,
 } from '../common/errors.js';
-import {
-	BackupInfo,
-	ColumnInfo,
-	DatabaseInfo,
-	QueryResult,
-	TableInfo,
-} from '../common/types.js';
+import { BackupInfo, DatabaseInfo } from '../common/types.js';
 import { debug_log, get_config } from '../config.js';
+import {
+	close_all_databases,
+	close_database,
+	open_database,
+	validate_database_path,
+} from './connection-manager.js';
+import {
+	bulk_insert,
+	describe_table,
+	execute_query,
+	execute_select_query,
+	is_read_only_query,
+	is_schema_query,
+	list_tables,
+	vacuum_database,
+} from './query-executor.js';
+import { export_schema, import_schema } from './schema-manager.js';
 
-// Database connection pool
-const connections = new Map<string, Database.Database>();
-
-/**
- * Validate and resolve database path
- */
-export function validate_database_path(path: string): string {
-	const config = get_config();
-
-	// Check if absolute paths are allowed
-	if (isAbsolute(path) && !config.SQLITE_ALLOW_ABSOLUTE_PATHS) {
-		throw new PathSecurityError(
-			'Absolute paths are not allowed. Set SQLITE_ALLOW_ABSOLUTE_PATHS=true to enable.',
-			path,
-		);
-	}
-
-	// Resolve relative paths against the default directory
-	let resolved_path: string;
-	if (isAbsolute(path)) {
-		resolved_path = path;
-	} else {
-		resolved_path = resolve(config.SQLITE_DEFAULT_PATH, path);
-	}
-
-	// Security check: ensure the resolved path is within allowed directories
-	if (!config.SQLITE_ALLOW_ABSOLUTE_PATHS) {
-		const relative_path = relative(
-			config.SQLITE_DEFAULT_PATH,
-			resolved_path,
-		);
-		if (relative_path.startsWith('..') || isAbsolute(relative_path)) {
-			throw new PathSecurityError(
-				'Path traversal outside the default directory is not allowed',
-				path,
-			);
-		}
-	}
-
-	debug_log('Validated database path:', {
-		original: path,
-		resolved_path,
-	});
-	return resolved_path;
-}
-
-/**
- * Open or create a database connection
- */
-export function open_database(
-	path: string,
-	create: boolean = true,
-): Database.Database {
-	return with_error_handling(() => {
-		const resolved_path = validate_database_path(path);
-
-		// Check if database already exists in connection pool
-		if (connections.has(resolved_path)) {
-			debug_log(
-				'Reusing existing database connection:',
-				resolved_path,
-			);
-			return connections.get(resolved_path)!;
-		}
-
-		// Check if file exists
-		const exists = existsSync(resolved_path);
-		if (!exists && !create) {
-			throw new DatabaseConnectionError(
-				`Database file does not exist: ${resolved_path}`,
-				resolved_path,
-			);
-		}
-
-		// Create directory if it doesn't exist
-		if (!exists) {
-			const dir = dirname(resolved_path);
-			if (!existsSync(dir)) {
-				mkdirSync(dir, { recursive: true });
-				debug_log('Created directory:', dir);
-			}
-		}
-
-		try {
-			// Open database connection
-			const db = new Database(resolved_path);
-
-			// Configure database for better performance and safety
-			db.pragma('journal_mode = WAL');
-			db.pragma('synchronous = NORMAL');
-			db.pragma('cache_size = 1000');
-			db.pragma('foreign_keys = ON');
-			db.pragma('temp_store = MEMORY');
-
-			// Store connection in pool
-			connections.set(resolved_path, db);
-
-			debug_log('Opened database connection:', resolved_path);
-			return db;
-		} catch (error) {
-			throw convert_sqlite_error(error, resolved_path);
-		}
-	}, 'open_database')();
-}
-
-/**
- * Close a database connection
- */
-export function close_database(path: string): void {
-	return with_error_handling(() => {
-		const resolved_path = validate_database_path(path);
-
-		const db = connections.get(resolved_path);
-		if (db) {
-			db.close();
-			connections.delete(resolved_path);
-			debug_log('Closed database connection:', resolved_path);
-		}
-	}, 'close_database')();
-}
-
-/**
- * Close all database connections
- */
-export function close_all_databases(): void {
-	for (const [path, db] of connections) {
-		try {
-			db.close();
-			debug_log('Closed database connection:', path);
-		} catch (error) {
-			console.error('Error closing database:', path, error);
-		}
-	}
-	connections.clear();
-}
-
-/**
- * Convert parameters to the format expected by better-sqlite3
- */
-function convert_parameters(params: Record<string, any>): any {
-	if (!params || Object.keys(params).length === 0) {
-		return {};
-	}
-
-	// Check if parameters are positional (numbered keys like "1", "2", etc.)
-	const keys = Object.keys(params);
-	const is_positional = keys.every((key) => /^\d+$/.test(key));
-
-	if (is_positional) {
-		// Convert to array for positional parameters
-		const max_index = Math.max(...keys.map((k) => parseInt(k)));
-		const param_array: any[] = new Array(max_index);
-
-		for (const [key, value] of Object.entries(params)) {
-			const index = parseInt(key) - 1; // Convert 1-based to 0-based indexing
-			param_array[index] = value;
-		}
-
-		return param_array;
-	}
-
-	// Return as-is for named parameters
-	return params;
-}
-
-/**
- * Execute a SQL query
- */
-export function execute_query(
-	database_path: string,
-	query: string,
-	params: Record<string, any> = {},
-): QueryResult {
-	return with_error_handling(() => {
-		const db = open_database(database_path);
-
-		try {
-			debug_log('Executing query:', { query, params });
-
-			// Prepare and execute the statement
-			const stmt = db.prepare(query);
-			const converted_params = convert_parameters(params);
-			const result = stmt.run(converted_params);
-
-			return {
-				rows: [],
-				changes: result.changes,
-				lastInsertRowid: result.lastInsertRowid,
-			};
-		} catch (error) {
-			throw convert_sqlite_error(error, database_path);
-		}
-	}, 'execute_query')();
-}
-
-/**
- * Execute a SELECT query and return rows
- */
-export function execute_select_query(
-	database_path: string,
-	query: string,
-	params: Record<string, any> = {},
-): QueryResult {
-	return with_error_handling(() => {
-		const db = open_database(database_path);
-
-		try {
-			debug_log('Executing select query:', { query, params });
-
-			// Prepare and execute the statement
-			const stmt = db.prepare(query);
-			const converted_params = convert_parameters(params);
-			const rows = stmt.all(converted_params);
-
-			return {
-				rows: rows as Record<string, any>[],
-				changes: 0,
-				lastInsertRowid: 0,
-			};
-		} catch (error) {
-			throw convert_sqlite_error(error, database_path);
-		}
-	}, 'execute_select_query')();
-}
-
-/**
- * List all tables in the database
- */
-export function list_tables(database_path: string): TableInfo[] {
-	return with_error_handling(() => {
-		const result = execute_select_query(
-			database_path,
-			"SELECT name, type, sql FROM sqlite_master WHERE type IN ('table', 'view') ORDER BY name",
-		);
-
-		return result.rows as TableInfo[];
-	}, 'list_tables')();
-}
-
-/**
- * Get table schema information
- */
-export function describe_table(
-	database_path: string,
-	table_name: string,
-): ColumnInfo[] {
-	return with_error_handling(() => {
-		const result = execute_select_query(
-			database_path,
-			`PRAGMA table_info(${table_name})`,
-		);
-
-		return result.rows as ColumnInfo[];
-	}, 'describe_table')();
-}
+// Re-export all functions to maintain backward compatibility
+export {
+	bulk_insert,
+	close_all_databases,
+	close_database,
+	describe_table,
+	execute_query,
+	execute_select_query,
+	export_schema,
+	import_schema,
+	is_read_only_query,
+	is_schema_query,
+	list_tables,
+	open_database,
+	vacuum_database,
+	validate_database_path,
+};
 
 /**
  * Get database information
@@ -384,49 +154,6 @@ export function backup_database(
 }
 
 /**
- * Vacuum the database to optimize storage
- */
-export function vacuum_database(database_path: string): void {
-	return with_error_handling(() => {
-		const db = open_database(database_path);
-
-		try {
-			debug_log('Vacuuming database:', database_path);
-			db.exec('VACUUM');
-		} catch (error) {
-			throw convert_sqlite_error(error, database_path);
-		}
-	}, 'vacuum_database')();
-}
-
-/**
- * Check if a query is read-only
- */
-export function is_read_only_query(query: string): boolean {
-	const normalized_query = query.trim().toLowerCase();
-
-	// Allow SELECT and PRAGMA statements
-	return (
-		normalized_query.startsWith('select') ||
-		normalized_query.startsWith('pragma') ||
-		normalized_query.startsWith('explain')
-	);
-}
-
-/**
- * Check if a query is a schema modification
- */
-export function is_schema_query(query: string): boolean {
-	const normalized_query = query.trim().toLowerCase();
-
-	return (
-		normalized_query.startsWith('create') ||
-		normalized_query.startsWith('drop') ||
-		normalized_query.startsWith('alter')
-	);
-}
-
-/**
  * List database files in a directory
  */
 export function list_database_files(directory?: string): Array<{
@@ -494,8 +221,3 @@ export function list_database_files(directory?: string): Array<{
 		return database_files;
 	}, 'list_database_files')();
 }
-
-// Cleanup on process exit
-process.on('exit', close_all_databases);
-process.on('SIGINT', close_all_databases);
-process.on('SIGTERM', close_all_databases);
