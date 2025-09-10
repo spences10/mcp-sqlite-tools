@@ -177,15 +177,17 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: list_databases', { directory });
 
+				const databases = sqlite.listDatabaseFiles(directory);
+
 				return {
 					content: [
 						{
 							type: 'text' as const,
 							text: JSON.stringify(
 								{
-									message:
-										'List databases functionality needs to be implemented',
 									directory: directory || 'default',
+									databases,
+									count: databases.length,
 								},
 								null,
 								2,

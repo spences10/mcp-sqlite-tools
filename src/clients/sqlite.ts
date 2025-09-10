@@ -6,6 +6,7 @@ import {
 	copyFileSync,
 	existsSync,
 	mkdirSync,
+	readdirSync,
 	statSync,
 } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
@@ -161,6 +162,35 @@ export function closeAllDatabases(): void {
 }
 
 /**
+ * Convert parameters to the format expected by better-sqlite3
+ */
+function convertParameters(params: Record<string, any>): any {
+	if (!params || Object.keys(params).length === 0) {
+		return {};
+	}
+
+	// Check if parameters are positional (numbered keys like "1", "2", etc.)
+	const keys = Object.keys(params);
+	const isPositional = keys.every((key) => /^\d+$/.test(key));
+
+	if (isPositional) {
+		// Convert to array for positional parameters
+		const maxIndex = Math.max(...keys.map((k) => parseInt(k)));
+		const paramArray: any[] = new Array(maxIndex);
+
+		for (const [key, value] of Object.entries(params)) {
+			const index = parseInt(key) - 1; // Convert 1-based to 0-based indexing
+			paramArray[index] = value;
+		}
+
+		return paramArray;
+	}
+
+	// Return as-is for named parameters
+	return params;
+}
+
+/**
  * Execute a SQL query
  */
 export function executeQuery(
@@ -176,7 +206,8 @@ export function executeQuery(
 
 			// Prepare and execute the statement
 			const stmt = db.prepare(query);
-			const result = stmt.run(params);
+			const convertedParams = convertParameters(params);
+			const result = stmt.run(convertedParams);
 
 			return {
 				rows: [],
@@ -205,7 +236,8 @@ export function executeSelectQuery(
 
 			// Prepare and execute the statement
 			const stmt = db.prepare(query);
-			const rows = stmt.all(params);
+			const convertedParams = convertParameters(params);
+			const rows = stmt.all(convertedParams);
 
 			return {
 				rows: rows as Record<string, any>[],
@@ -390,6 +422,75 @@ export function isSchemaQuery(query: string): boolean {
 		normalizedQuery.startsWith('drop') ||
 		normalizedQuery.startsWith('alter')
 	);
+}
+
+/**
+ * List database files in a directory
+ */
+export function listDatabaseFiles(directory?: string): Array<{
+	name: string;
+	path: string;
+	size: number;
+	modified: string;
+}> {
+	return withErrorHandling(() => {
+		const config = get_config();
+
+		// Use provided directory or default
+		const searchDir = directory
+			? validateDatabasePath(directory)
+			: config.SQLITE_DEFAULT_PATH;
+
+		if (!existsSync(searchDir)) {
+			throw new Error(`Directory does not exist: ${searchDir}`);
+		}
+
+		const files = readdirSync(searchDir);
+		const databaseFiles: Array<{
+			name: string;
+			path: string;
+			size: number;
+			modified: string;
+		}> = [];
+
+		for (const file of files) {
+			// Check if file has database extension
+			if (
+				file.endsWith('.db') ||
+				file.endsWith('.sqlite') ||
+				file.endsWith('.sqlite3')
+			) {
+				const filePath = resolve(searchDir, file);
+
+				try {
+					const stats = statSync(filePath);
+
+					// Only include regular files
+					if (stats.isFile()) {
+						databaseFiles.push({
+							name: file,
+							path: filePath,
+							size: stats.size,
+							modified: stats.mtime.toISOString(),
+						});
+					}
+				} catch (error) {
+					// Skip files that can't be accessed
+					debug_log(
+						'Skipping file due to access error:',
+						file,
+						error,
+					);
+				}
+			}
+		}
+
+		// Sort by name
+		databaseFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+		debug_log('Found database files:', databaseFiles);
+		return databaseFiles;
+	}, 'listDatabaseFiles')();
 }
 
 // Cleanup on process exit
