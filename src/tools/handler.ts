@@ -4,56 +4,23 @@
 import { McpServer } from 'tmcp';
 import * as v from 'valibot';
 import * as sqlite from '../clients/sqlite.js';
-import { format_error } from '../common/errors.js';
+import {
+	create_tool_error_response,
+	create_tool_response,
+} from '../common/errors.js';
 import { debug_log } from '../config.js';
 import {
-	resolveDatabaseName,
-	setCurrentDatabase,
+	resolve_database_name,
+	set_current_database,
 } from './context.js';
-
-/**
- * Helper to create consistent tool responses
- */
-function createResponse(data: any) {
-	return {
-		content: [
-			{
-				type: 'text' as const,
-				text: JSON.stringify(data, null, 2),
-			},
-		],
-	};
-}
-
-/**
- * Helper to create consistent error responses
- */
-function createErrorResponse(error: unknown) {
-	return {
-		content: [
-			{
-				type: 'text' as const,
-				text: JSON.stringify(
-					{
-						error: 'execution_error',
-						message: format_error(error),
-					},
-					null,
-					2,
-				),
-			},
-		],
-		isError: true,
-	};
-}
 
 /**
  * Helper to handle database context setup
  */
-function setupDatabaseContext(database?: string) {
-	const databasePath = resolveDatabaseName(database);
-	if (database) setCurrentDatabase(database);
-	return databasePath;
+function setup_database_context(database?: string) {
+	const database_path = resolve_database_name(database);
+	if (database) set_current_database(database);
+	return database_path;
 }
 
 // Input validation schemas
@@ -108,7 +75,7 @@ const DropTableSchema = v.object({
 /**
  * Register all tools with the server
  */
-export function registerTools(server: McpServer<any>): void {
+export function register_tools(server: McpServer<any>): void {
 	// Database Management Tools
 	server.tool<typeof OpenDatabaseSchema>(
 		{
@@ -120,44 +87,17 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: open_database', { path, create });
 
-				const db = sqlite.open_database(path, create);
-				setCurrentDatabase(path);
+				set_current_database(path);
 
 				const info = sqlite.get_database_info(path);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									success: true,
-									message: `Database opened: ${path}`,
-									database: info,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					success: true,
+					message: `Database opened: ${path}`,
+					database: info,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -172,15 +112,15 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: close_database', { database });
 
-				const databasePath = setupDatabaseContext(database);
-				sqlite.close_database(databasePath);
+				const database_path = setup_database_context(database);
+				sqlite.close_database(database_path);
 
-				return createResponse({
+				return create_tool_response({
 					success: true,
-					message: `Database closed: ${databasePath}`,
+					message: `Database closed: ${database_path}`,
 				});
 			} catch (error) {
-				return createErrorResponse(error);
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -198,39 +138,13 @@ export function registerTools(server: McpServer<any>): void {
 
 				const databases = sqlite.list_database_files(directory);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									directory: directory || 'default',
-									databases,
-									count: databases.length,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					directory: directory || 'default',
+					databases,
+					count: databases.length,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -246,15 +160,15 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: database_info', { database });
 
-				const databasePath = setupDatabaseContext(database);
-				const info = sqlite.get_database_info(databasePath);
+				const database_path = setup_database_context(database);
+				const info = sqlite.get_database_info(database_path);
 
-				return createResponse({
-					database: databasePath,
+				return create_tool_response({
+					database: database_path,
 					info,
 				});
 			} catch (error) {
-				return createErrorResponse(error);
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -270,43 +184,17 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: list_tables', { database });
 
-				const databasePath = resolveDatabaseName(database);
-				if (database) setCurrentDatabase(database);
+				const database_path = resolve_database_name(database);
+				if (database) set_current_database(database);
 
-				const tables = sqlite.list_tables(databasePath);
+				const tables = sqlite.list_tables(database_path);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									database: databasePath,
-									tables,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					database: database_path,
+					tables,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -324,50 +212,24 @@ export function registerTools(server: McpServer<any>): void {
 					database,
 				});
 
-				const databasePath = resolveDatabaseName(database);
-				if (database) setCurrentDatabase(database);
+				const database_path = resolve_database_name(database);
+				if (database) set_current_database(database);
 
-				const columns = sqlite.describe_table(databasePath, table);
+				const columns = sqlite.describe_table(database_path, table);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									database: databasePath,
-									table,
-									columns: columns.map((col) => ({
-										name: col.name,
-										type: col.type,
-										nullable: col.notnull === 0,
-										default_value: col.dflt_value,
-										primary_key: col.pk === 1,
-									})),
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					database: database_path,
+					table,
+					columns: columns.map((col) => ({
+						name: col.name,
+						type: col.type,
+						nullable: col.notnull === 0,
+						default_value: col.dflt_value,
+						primary_key: col.pk === 1,
+					})),
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -387,11 +249,11 @@ export function registerTools(server: McpServer<any>): void {
 					database,
 				});
 
-				const databasePath = resolveDatabaseName(database);
-				if (database) setCurrentDatabase(database);
+				const database_path = resolve_database_name(database);
+				if (database) set_current_database(database);
 
 				// Build CREATE TABLE SQL
-				const columnDefs = columns
+				const column_defs = columns
 					.map((col) => {
 						let def = `${col.name} ${col.type}`;
 						if (col.primary_key) def += ' PRIMARY KEY';
@@ -402,44 +264,21 @@ export function registerTools(server: McpServer<any>): void {
 					})
 					.join(', ');
 
-				const createSql = `CREATE TABLE ${name} (${columnDefs})`;
-				const result = sqlite.execute_query(databasePath, createSql);
+				const create_sql = `CREATE TABLE ${name} (${column_defs})`;
+				const result = sqlite.execute_query(
+					database_path,
+					create_sql,
+				);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									success: true,
-									database: databasePath,
-									table: name,
-									query: createSql,
-									result,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					success: true,
+					database: database_path,
+					table: name,
+					query: create_sql,
+					result,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -455,47 +294,21 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: drop_table', { table, database });
 
-				const databasePath = resolveDatabaseName(database);
-				if (database) setCurrentDatabase(database);
+				const database_path = resolve_database_name(database);
+				if (database) set_current_database(database);
 
-				const dropSql = `DROP TABLE ${table}`;
-				const result = sqlite.execute_query(databasePath, dropSql);
+				const drop_sql = `DROP TABLE ${table}`;
+				const result = sqlite.execute_query(database_path, drop_sql);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									success: true,
-									database: databasePath,
-									table,
-									query: dropSql,
-									result,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					success: true,
+					database: database_path,
+					table,
+					query: drop_sql,
+					result,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -516,8 +329,8 @@ export function registerTools(server: McpServer<any>): void {
 					database,
 				});
 
-				const databasePath = resolveDatabaseName(database);
-				if (database) setCurrentDatabase(database);
+				const database_path = resolve_database_name(database);
+				if (database) set_current_database(database);
 
 				// Validate that this is a read-only query
 				if (!sqlite.is_read_only_query(query)) {
@@ -527,44 +340,18 @@ export function registerTools(server: McpServer<any>): void {
 				}
 
 				const result = sqlite.execute_select_query(
-					databasePath,
+					database_path,
 					query,
 					params,
 				);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									database: databasePath,
-									query,
-									result,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					database: database_path,
+					query,
+					result,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -584,8 +371,8 @@ export function registerTools(server: McpServer<any>): void {
 					database,
 				});
 
-				const databasePath = resolveDatabaseName(database);
-				if (database) setCurrentDatabase(database);
+				const database_path = resolve_database_name(database);
+				if (database) set_current_database(database);
 
 				// Validate that this is not a read-only query and not a schema query
 				if (sqlite.is_read_only_query(query)) {
@@ -600,44 +387,18 @@ export function registerTools(server: McpServer<any>): void {
 				}
 
 				const result = sqlite.execute_query(
-					databasePath,
+					database_path,
 					query,
 					params,
 				);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									database: databasePath,
-									query,
-									result,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					database: database_path,
+					query,
+					result,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -657,8 +418,8 @@ export function registerTools(server: McpServer<any>): void {
 					database,
 				});
 
-				const databasePath = resolveDatabaseName(database);
-				if (database) setCurrentDatabase(database);
+				const database_path = resolve_database_name(database);
+				if (database) set_current_database(database);
 
 				// Validate that this is a schema query
 				if (!sqlite.is_schema_query(query)) {
@@ -668,44 +429,18 @@ export function registerTools(server: McpServer<any>): void {
 				}
 
 				const result = sqlite.execute_query(
-					databasePath,
+					database_path,
 					query,
 					params,
 				);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									database: databasePath,
-									query,
-									result,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					database: database_path,
+					query,
+					result,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -724,45 +459,19 @@ export function registerTools(server: McpServer<any>): void {
 					backup_path,
 				});
 
-				const sourcePath = resolveDatabaseName(source_database);
+				const source_path = resolve_database_name(source_database);
 
-				const backupInfo = sqlite.backup_database(
-					sourcePath,
+				const backup_info = sqlite.backup_database(
+					source_path,
 					backup_path,
 				);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									success: true,
-									backup: backupInfo,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return create_tool_response({
+					success: true,
+					backup: backup_info,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: format_error(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return create_tool_error_response(error);
 			}
 		},
 	);
@@ -778,16 +487,16 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: vacuum_database', { database });
 
-				const databasePath = setupDatabaseContext(database);
-				sqlite.vacuum_database(databasePath);
+				const database_path = setup_database_context(database);
+				sqlite.vacuum_database(database_path);
 
-				return createResponse({
+				return create_tool_response({
 					success: true,
-					database: databasePath,
+					database: database_path,
 					message: 'Database vacuumed successfully',
 				});
 			} catch (error) {
-				return createErrorResponse(error);
+				return create_tool_error_response(error);
 			}
 		},
 	);

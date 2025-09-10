@@ -9,7 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { close_all_databases } from './clients/sqlite.js';
 import { get_config } from './config.js';
-import { registerTools } from './tools/handler.js';
+import { register_tools } from './tools/handler.js';
 
 // Get package info for server metadata
 const __filename = fileURLToPath(import.meta.url);
@@ -88,7 +88,7 @@ class SqliteToolsServer {
 			);
 
 			// Register all tools using the unified handler
-			registerTools(this.server);
+			register_tools(this.server);
 
 			console.error('All tools registered');
 		} catch (error) {

@@ -190,6 +190,42 @@ export function format_error(error: any): string {
 }
 
 /**
+ * Helper to create consistent tool responses
+ */
+export function create_tool_response(data: any) {
+	return {
+		content: [
+			{
+				type: 'text' as const,
+				text: JSON.stringify(data, null, 2),
+			},
+		],
+	};
+}
+
+/**
+ * Helper to create consistent error responses
+ */
+export function create_tool_error_response(error: unknown) {
+	return {
+		content: [
+			{
+				type: 'text' as const,
+				text: JSON.stringify(
+					{
+						error: 'execution_error',
+						message: format_error(error),
+					},
+					null,
+					2,
+				),
+			},
+		],
+		isError: true,
+	};
+}
+
+/**
  * Wrap a function to catch and convert errors
  */
 export function with_error_handling<T extends any[], R>(
