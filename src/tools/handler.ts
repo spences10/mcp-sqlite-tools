@@ -11,6 +11,51 @@ import {
 	setCurrentDatabase,
 } from './context.js';
 
+/**
+ * Helper to create consistent tool responses
+ */
+function createResponse(data: any) {
+	return {
+		content: [
+			{
+				type: 'text' as const,
+				text: JSON.stringify(data, null, 2),
+			},
+		],
+	};
+}
+
+/**
+ * Helper to create consistent error responses
+ */
+function createErrorResponse(error: unknown) {
+	return {
+		content: [
+			{
+				type: 'text' as const,
+				text: JSON.stringify(
+					{
+						error: 'execution_error',
+						message: formatError(error),
+					},
+					null,
+					2,
+				),
+			},
+		],
+		isError: true,
+	};
+}
+
+/**
+ * Helper to handle database context setup
+ */
+function setupDatabaseContext(database?: string) {
+	const databasePath = resolveDatabaseName(database);
+	if (database) setCurrentDatabase(database);
+	return databasePath;
+}
+
 // Input validation schemas
 const OpenDatabaseSchema = v.object({
 	path: v.pipe(v.string(), v.minLength(1)),
@@ -127,41 +172,15 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: close_database', { database });
 
-				const databasePath = resolveDatabaseName(database);
+				const databasePath = setupDatabaseContext(database);
 				sqlite.closeDatabase(databasePath);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									success: true,
-									message: `Database closed: ${databasePath}`,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return createResponse({
+					success: true,
+					message: `Database closed: ${databasePath}`,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: formatError(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return createErrorResponse(error);
 			}
 		},
 	);
@@ -227,41 +246,15 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: database_info', { database });
 
-				const databasePath = resolveDatabaseName(database);
+				const databasePath = setupDatabaseContext(database);
 				const info = sqlite.getDatabaseInfo(databasePath);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									database: databasePath,
-									info,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return createResponse({
+					database: databasePath,
+					info,
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: formatError(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return createErrorResponse(error);
 			}
 		},
 	);
@@ -785,42 +778,16 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: vacuum_database', { database });
 
-				const databasePath = resolveDatabaseName(database);
+				const databasePath = setupDatabaseContext(database);
 				sqlite.vacuumDatabase(databasePath);
 
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									success: true,
-									database: databasePath,
-									message: 'Database vacuumed successfully',
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
+				return createResponse({
+					success: true,
+					database: databasePath,
+					message: 'Database vacuumed successfully',
+				});
 			} catch (error) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: JSON.stringify(
-								{
-									error: 'execution_error',
-									message: formatError(error),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
+				return createErrorResponse(error);
 			}
 		},
 	);
