@@ -4,7 +4,7 @@
 import { McpServer } from 'tmcp';
 import * as v from 'valibot';
 import * as sqlite from '../clients/sqlite.js';
-import { formatError } from '../common/errors.js';
+import { format_error } from '../common/errors.js';
 import { debug_log } from '../config.js';
 import {
 	resolveDatabaseName,
@@ -36,7 +36,7 @@ function createErrorResponse(error: unknown) {
 				text: JSON.stringify(
 					{
 						error: 'execution_error',
-						message: formatError(error),
+						message: format_error(error),
 					},
 					null,
 					2,
@@ -120,10 +120,10 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: open_database', { path, create });
 
-				const db = sqlite.openDatabase(path, create);
+				const db = sqlite.open_database(path, create);
 				setCurrentDatabase(path);
 
-				const info = sqlite.getDatabaseInfo(path);
+				const info = sqlite.get_database_info(path);
 
 				return {
 					content: [
@@ -149,7 +149,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -173,7 +173,7 @@ export function registerTools(server: McpServer<any>): void {
 				debug_log('Executing tool: close_database', { database });
 
 				const databasePath = setupDatabaseContext(database);
-				sqlite.closeDatabase(databasePath);
+				sqlite.close_database(databasePath);
 
 				return createResponse({
 					success: true,
@@ -196,7 +196,7 @@ export function registerTools(server: McpServer<any>): void {
 			try {
 				debug_log('Executing tool: list_databases', { directory });
 
-				const databases = sqlite.listDatabaseFiles(directory);
+				const databases = sqlite.list_database_files(directory);
 
 				return {
 					content: [
@@ -222,7 +222,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -247,7 +247,7 @@ export function registerTools(server: McpServer<any>): void {
 				debug_log('Executing tool: database_info', { database });
 
 				const databasePath = setupDatabaseContext(database);
-				const info = sqlite.getDatabaseInfo(databasePath);
+				const info = sqlite.get_database_info(databasePath);
 
 				return createResponse({
 					database: databasePath,
@@ -273,7 +273,7 @@ export function registerTools(server: McpServer<any>): void {
 				const databasePath = resolveDatabaseName(database);
 				if (database) setCurrentDatabase(database);
 
-				const tables = sqlite.listTables(databasePath);
+				const tables = sqlite.list_tables(databasePath);
 
 				return {
 					content: [
@@ -298,7 +298,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -327,7 +327,7 @@ export function registerTools(server: McpServer<any>): void {
 				const databasePath = resolveDatabaseName(database);
 				if (database) setCurrentDatabase(database);
 
-				const columns = sqlite.describeTable(databasePath, table);
+				const columns = sqlite.describe_table(databasePath, table);
 
 				return {
 					content: [
@@ -359,7 +359,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -403,7 +403,7 @@ export function registerTools(server: McpServer<any>): void {
 					.join(', ');
 
 				const createSql = `CREATE TABLE ${name} (${columnDefs})`;
-				const result = sqlite.executeQuery(databasePath, createSql);
+				const result = sqlite.execute_query(databasePath, createSql);
 
 				return {
 					content: [
@@ -431,7 +431,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -459,7 +459,7 @@ export function registerTools(server: McpServer<any>): void {
 				if (database) setCurrentDatabase(database);
 
 				const dropSql = `DROP TABLE ${table}`;
-				const result = sqlite.executeQuery(databasePath, dropSql);
+				const result = sqlite.execute_query(databasePath, dropSql);
 
 				return {
 					content: [
@@ -487,7 +487,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -520,13 +520,13 @@ export function registerTools(server: McpServer<any>): void {
 				if (database) setCurrentDatabase(database);
 
 				// Validate that this is a read-only query
-				if (!sqlite.isReadOnlyQuery(query)) {
+				if (!sqlite.is_read_only_query(query)) {
 					throw new Error(
 						'Only SELECT, PRAGMA, and EXPLAIN queries are allowed with execute_read_query',
 					);
 				}
 
-				const result = sqlite.executeSelectQuery(
+				const result = sqlite.execute_select_query(
 					databasePath,
 					query,
 					params,
@@ -556,7 +556,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -588,18 +588,18 @@ export function registerTools(server: McpServer<any>): void {
 				if (database) setCurrentDatabase(database);
 
 				// Validate that this is not a read-only query and not a schema query
-				if (sqlite.isReadOnlyQuery(query)) {
+				if (sqlite.is_read_only_query(query)) {
 					throw new Error(
 						'SELECT, PRAGMA, and EXPLAIN queries should use execute_read_query',
 					);
 				}
-				if (sqlite.isSchemaQuery(query)) {
+				if (sqlite.is_schema_query(query)) {
 					throw new Error(
 						'DDL queries (CREATE, ALTER, DROP) should use execute_schema_query',
 					);
 				}
 
-				const result = sqlite.executeQuery(
+				const result = sqlite.execute_query(
 					databasePath,
 					query,
 					params,
@@ -629,7 +629,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -661,13 +661,13 @@ export function registerTools(server: McpServer<any>): void {
 				if (database) setCurrentDatabase(database);
 
 				// Validate that this is a schema query
-				if (!sqlite.isSchemaQuery(query)) {
+				if (!sqlite.is_schema_query(query)) {
 					throw new Error(
 						'Only DDL queries (CREATE, ALTER, DROP) are allowed with execute_schema_query',
 					);
 				}
 
-				const result = sqlite.executeQuery(
+				const result = sqlite.execute_query(
 					databasePath,
 					query,
 					params,
@@ -697,7 +697,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -726,7 +726,7 @@ export function registerTools(server: McpServer<any>): void {
 
 				const sourcePath = resolveDatabaseName(source_database);
 
-				const backupInfo = sqlite.backupDatabase(
+				const backupInfo = sqlite.backup_database(
 					sourcePath,
 					backup_path,
 				);
@@ -754,7 +754,7 @@ export function registerTools(server: McpServer<any>): void {
 							text: JSON.stringify(
 								{
 									error: 'execution_error',
-									message: formatError(error),
+									message: format_error(error),
 								},
 								null,
 								2,
@@ -779,7 +779,7 @@ export function registerTools(server: McpServer<any>): void {
 				debug_log('Executing tool: vacuum_database', { database });
 
 				const databasePath = setupDatabaseContext(database);
-				sqlite.vacuumDatabase(databasePath);
+				sqlite.vacuum_database(databasePath);
 
 				return createResponse({
 					success: true,

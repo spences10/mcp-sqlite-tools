@@ -86,7 +86,7 @@ export class DatabaseConnectionError extends Error {
 /**
  * Convert better-sqlite3 errors to our custom error types
  */
-export function convertSqliteError(
+export function convert_sqlite_error(
 	error: any,
 	path?: string,
 ): SqliteError {
@@ -139,7 +139,7 @@ export function convertSqliteError(
 /**
  * Check if an error is a specific SQLite error code
  */
-export function isSqliteError(
+export function is_sqlite_error(
 	error: any,
 	code?: SqliteErrorCode,
 ): boolean {
@@ -157,7 +157,7 @@ export function isSqliteError(
 /**
  * Format error for user-friendly display
  */
-export function formatError(error: any): string {
+export function format_error(error: any): string {
 	if (error instanceof SqliteError) {
 		let message = `SQLite Error (${error.code}): ${error.message}`;
 		if (error.path) {
@@ -192,7 +192,7 @@ export function formatError(error: any): string {
 /**
  * Wrap a function to catch and convert errors
  */
-export function withErrorHandling<T extends any[], R>(
+export function with_error_handling<T extends any[], R>(
 	fn: (...args: T) => R,
 	context?: string,
 ): (...args: T) => R {

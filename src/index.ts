@@ -7,7 +7,7 @@ import { McpServer } from 'tmcp';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { closeAllDatabases } from './clients/sqlite.js';
+import { close_all_databases } from './clients/sqlite.js';
 import { get_config } from './config.js';
 import { registerTools } from './tools/handler.js';
 
@@ -68,7 +68,7 @@ class SqliteToolsServer {
 	private async cleanup(): Promise<void> {
 		try {
 			// Close all database connections
-			closeAllDatabases();
+			close_all_databases();
 
 			console.error('SQLite Tools MCP server shutdown complete');
 		} catch (error) {

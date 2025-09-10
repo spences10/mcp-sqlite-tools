@@ -1,7 +1,7 @@
 /**
  * Database context management for the SQLite Tools MCP server
  */
-import { validateDatabasePath } from '../clients/sqlite.js';
+import { validate_database_path } from '../clients/sqlite.js';
 import { debug_log, get_config } from '../config.js';
 
 // Current database context
@@ -12,7 +12,7 @@ let currentDatabase: string | null = null;
  */
 export function setCurrentDatabase(databasePath: string): void {
 	// Validate the path before setting it
-	const resolvedPath = validateDatabasePath(databasePath);
+	const resolvedPath = validate_database_path(databasePath);
 	currentDatabase = resolvedPath;
 	debug_log('Set current database context:', resolvedPath);
 }
@@ -38,7 +38,7 @@ export function clearCurrentDatabase(): void {
 export function resolveDatabaseName(databasePath?: string): string {
 	if (databasePath) {
 		// Use provided database path
-		return validateDatabasePath(databasePath);
+		return validate_database_path(databasePath);
 	}
 
 	if (currentDatabase) {
@@ -50,7 +50,7 @@ export function resolveDatabaseName(databasePath?: string): string {
 	// Use default database if configured
 	const config = get_config();
 	if (process.env['SQLITE_DEFAULT_DATABASE']) {
-		const defaultPath = validateDatabasePath(
+		const defaultPath = validate_database_path(
 			process.env['SQLITE_DEFAULT_DATABASE'],
 		);
 		debug_log('Using default database:', defaultPath);
@@ -58,7 +58,7 @@ export function resolveDatabaseName(databasePath?: string): string {
 	}
 
 	// Fallback to a default name
-	const fallbackPath = validateDatabasePath('default.db');
+	const fallbackPath = validate_database_path('default.db');
 	debug_log('Using fallback database:', fallbackPath);
 	return fallbackPath;
 }

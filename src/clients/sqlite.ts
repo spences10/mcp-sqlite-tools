@@ -13,8 +13,8 @@ import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import {
 	DatabaseConnectionError,
 	PathSecurityError,
-	convertSqliteError,
-	withErrorHandling,
+	convert_sqlite_error,
+	with_error_handling,
 } from '../common/errors.js';
 import {
 	BackupInfo,
@@ -31,7 +31,7 @@ const connections = new Map<string, Database.Database>();
 /**
  * Validate and resolve database path
  */
-export function validateDatabasePath(path: string): string {
+export function validate_database_path(path: string): string {
 	const config = get_config();
 
 	// Check if absolute paths are allowed
@@ -43,20 +43,20 @@ export function validateDatabasePath(path: string): string {
 	}
 
 	// Resolve relative paths against the default directory
-	let resolvedPath: string;
+	let resolved_path: string;
 	if (isAbsolute(path)) {
-		resolvedPath = path;
+		resolved_path = path;
 	} else {
-		resolvedPath = resolve(config.SQLITE_DEFAULT_PATH, path);
+		resolved_path = resolve(config.SQLITE_DEFAULT_PATH, path);
 	}
 
 	// Security check: ensure the resolved path is within allowed directories
 	if (!config.SQLITE_ALLOW_ABSOLUTE_PATHS) {
-		const relativePath = relative(
+		const relative_path = relative(
 			config.SQLITE_DEFAULT_PATH,
-			resolvedPath,
+			resolved_path,
 		);
-		if (relativePath.startsWith('..') || isAbsolute(relativePath)) {
+		if (relative_path.startsWith('..') || isAbsolute(relative_path)) {
 			throw new PathSecurityError(
 				'Path traversal outside the default directory is not allowed',
 				path,
@@ -66,42 +66,42 @@ export function validateDatabasePath(path: string): string {
 
 	debug_log('Validated database path:', {
 		original: path,
-		resolved: resolvedPath,
+		resolved_path,
 	});
-	return resolvedPath;
+	return resolved_path;
 }
 
 /**
  * Open or create a database connection
  */
-export function openDatabase(
+export function open_database(
 	path: string,
 	create: boolean = true,
 ): Database.Database {
-	return withErrorHandling(() => {
-		const resolvedPath = validateDatabasePath(path);
+	return with_error_handling(() => {
+		const resolved_path = validate_database_path(path);
 
 		// Check if database already exists in connection pool
-		if (connections.has(resolvedPath)) {
+		if (connections.has(resolved_path)) {
 			debug_log(
 				'Reusing existing database connection:',
-				resolvedPath,
+				resolved_path,
 			);
-			return connections.get(resolvedPath)!;
+			return connections.get(resolved_path)!;
 		}
 
 		// Check if file exists
-		const exists = existsSync(resolvedPath);
+		const exists = existsSync(resolved_path);
 		if (!exists && !create) {
 			throw new DatabaseConnectionError(
-				`Database file does not exist: ${resolvedPath}`,
-				resolvedPath,
+				`Database file does not exist: ${resolved_path}`,
+				resolved_path,
 			);
 		}
 
 		// Create directory if it doesn't exist
 		if (!exists) {
-			const dir = dirname(resolvedPath);
+			const dir = dirname(resolved_path);
 			if (!existsSync(dir)) {
 				mkdirSync(dir, { recursive: true });
 				debug_log('Created directory:', dir);
@@ -110,7 +110,7 @@ export function openDatabase(
 
 		try {
 			// Open database connection
-			const db = new Database(resolvedPath);
+			const db = new Database(resolved_path);
 
 			// Configure database for better performance and safety
 			db.pragma('journal_mode = WAL');
@@ -120,36 +120,36 @@ export function openDatabase(
 			db.pragma('temp_store = MEMORY');
 
 			// Store connection in pool
-			connections.set(resolvedPath, db);
+			connections.set(resolved_path, db);
 
-			debug_log('Opened database connection:', resolvedPath);
+			debug_log('Opened database connection:', resolved_path);
 			return db;
 		} catch (error) {
-			throw convertSqliteError(error, resolvedPath);
+			throw convert_sqlite_error(error, resolved_path);
 		}
-	}, 'openDatabase')();
+	}, 'open_database')();
 }
 
 /**
  * Close a database connection
  */
-export function closeDatabase(path: string): void {
-	return withErrorHandling(() => {
-		const resolvedPath = validateDatabasePath(path);
+export function close_database(path: string): void {
+	return with_error_handling(() => {
+		const resolved_path = validate_database_path(path);
 
-		const db = connections.get(resolvedPath);
+		const db = connections.get(resolved_path);
 		if (db) {
 			db.close();
-			connections.delete(resolvedPath);
-			debug_log('Closed database connection:', resolvedPath);
+			connections.delete(resolved_path);
+			debug_log('Closed database connection:', resolved_path);
 		}
-	}, 'closeDatabase')();
+	}, 'close_database')();
 }
 
 /**
  * Close all database connections
  */
-export function closeAllDatabases(): void {
+export function close_all_databases(): void {
 	for (const [path, db] of connections) {
 		try {
 			db.close();
@@ -164,26 +164,26 @@ export function closeAllDatabases(): void {
 /**
  * Convert parameters to the format expected by better-sqlite3
  */
-function convertParameters(params: Record<string, any>): any {
+function convert_parameters(params: Record<string, any>): any {
 	if (!params || Object.keys(params).length === 0) {
 		return {};
 	}
 
 	// Check if parameters are positional (numbered keys like "1", "2", etc.)
 	const keys = Object.keys(params);
-	const isPositional = keys.every((key) => /^\d+$/.test(key));
+	const is_positional = keys.every((key) => /^\d+$/.test(key));
 
-	if (isPositional) {
+	if (is_positional) {
 		// Convert to array for positional parameters
-		const maxIndex = Math.max(...keys.map((k) => parseInt(k)));
-		const paramArray: any[] = new Array(maxIndex);
+		const max_index = Math.max(...keys.map((k) => parseInt(k)));
+		const param_array: any[] = new Array(max_index);
 
 		for (const [key, value] of Object.entries(params)) {
 			const index = parseInt(key) - 1; // Convert 1-based to 0-based indexing
-			paramArray[index] = value;
+			param_array[index] = value;
 		}
 
-		return paramArray;
+		return param_array;
 	}
 
 	// Return as-is for named parameters
@@ -193,21 +193,21 @@ function convertParameters(params: Record<string, any>): any {
 /**
  * Execute a SQL query
  */
-export function executeQuery(
-	databasePath: string,
+export function execute_query(
+	database_path: string,
 	query: string,
 	params: Record<string, any> = {},
 ): QueryResult {
-	return withErrorHandling(() => {
-		const db = openDatabase(databasePath);
+	return with_error_handling(() => {
+		const db = open_database(database_path);
 
 		try {
 			debug_log('Executing query:', { query, params });
 
 			// Prepare and execute the statement
 			const stmt = db.prepare(query);
-			const convertedParams = convertParameters(params);
-			const result = stmt.run(convertedParams);
+			const converted_params = convert_parameters(params);
+			const result = stmt.run(converted_params);
 
 			return {
 				rows: [],
@@ -215,29 +215,29 @@ export function executeQuery(
 				lastInsertRowid: result.lastInsertRowid,
 			};
 		} catch (error) {
-			throw convertSqliteError(error, databasePath);
+			throw convert_sqlite_error(error, database_path);
 		}
-	}, 'executeQuery')();
+	}, 'execute_query')();
 }
 
 /**
  * Execute a SELECT query and return rows
  */
-export function executeSelectQuery(
-	databasePath: string,
+export function execute_select_query(
+	database_path: string,
 	query: string,
 	params: Record<string, any> = {},
 ): QueryResult {
-	return withErrorHandling(() => {
-		const db = openDatabase(databasePath);
+	return with_error_handling(() => {
+		const db = open_database(database_path);
 
 		try {
 			debug_log('Executing select query:', { query, params });
 
 			// Prepare and execute the statement
 			const stmt = db.prepare(query);
-			const convertedParams = convertParameters(params);
-			const rows = stmt.all(convertedParams);
+			const converted_params = convert_parameters(params);
+			const rows = stmt.all(converted_params);
 
 			return {
 				rows: rows as Record<string, any>[],
@@ -245,208 +245,210 @@ export function executeSelectQuery(
 				lastInsertRowid: 0,
 			};
 		} catch (error) {
-			throw convertSqliteError(error, databasePath);
+			throw convert_sqlite_error(error, database_path);
 		}
-	}, 'executeSelectQuery')();
+	}, 'execute_select_query')();
 }
 
 /**
  * List all tables in the database
  */
-export function listTables(databasePath: string): TableInfo[] {
-	return withErrorHandling(() => {
-		const result = executeSelectQuery(
-			databasePath,
+export function list_tables(database_path: string): TableInfo[] {
+	return with_error_handling(() => {
+		const result = execute_select_query(
+			database_path,
 			"SELECT name, type, sql FROM sqlite_master WHERE type IN ('table', 'view') ORDER BY name",
 		);
 
 		return result.rows as TableInfo[];
-	}, 'listTables')();
+	}, 'list_tables')();
 }
 
 /**
  * Get table schema information
  */
-export function describeTable(
-	databasePath: string,
-	tableName: string,
+export function describe_table(
+	database_path: string,
+	table_name: string,
 ): ColumnInfo[] {
-	return withErrorHandling(() => {
-		const result = executeSelectQuery(
-			databasePath,
-			`PRAGMA table_info(${tableName})`,
+	return with_error_handling(() => {
+		const result = execute_select_query(
+			database_path,
+			`PRAGMA table_info(${table_name})`,
 		);
 
 		return result.rows as ColumnInfo[];
-	}, 'describeTable')();
+	}, 'describe_table')();
 }
 
 /**
  * Get database information
  */
-export function getDatabaseInfo(databasePath: string): DatabaseInfo {
-	return withErrorHandling(() => {
-		const resolvedPath = validateDatabasePath(databasePath);
-		const db = openDatabase(databasePath);
+export function get_database_info(
+	database_path: string,
+): DatabaseInfo {
+	return with_error_handling(() => {
+		const resolved_path = validate_database_path(database_path);
+		const db = open_database(database_path);
 
 		try {
 			// Get file size
-			const stats = statSync(resolvedPath);
+			const stats = statSync(resolved_path);
 
 			// Get database metadata
-			const pageSize = db.pragma('page_size', {
+			const page_size = db.pragma('page_size', {
 				simple: true,
 			}) as number;
-			const pageCount = db.pragma('page_count', {
+			const page_count = db.pragma('page_count', {
 				simple: true,
 			}) as number;
 			const encoding = db.pragma('encoding', {
 				simple: true,
 			}) as string;
-			const userVersion = db.pragma('user_version', {
+			const user_version = db.pragma('user_version', {
 				simple: true,
 			}) as number;
 
 			// Count tables
-			const tables = listTables(databasePath);
+			const tables = list_tables(database_path);
 
 			return {
-				path: resolvedPath,
+				path: resolved_path,
 				size: stats.size,
 				tables: tables.length,
-				pageSize,
-				pageCount,
+				page_size,
+				page_count,
 				encoding,
-				userVersion,
+				user_version,
 			};
 		} catch (error) {
-			throw convertSqliteError(error, resolvedPath);
+			throw convert_sqlite_error(error, resolved_path);
 		}
-	}, 'getDatabaseInfo')();
+	}, 'get_database_info')();
 }
 
 /**
  * Create a backup of the database
  */
-export function backupDatabase(
-	sourcePath: string,
-	backupPath?: string,
+export function backup_database(
+	source_path: string,
+	backup_path?: string,
 ): BackupInfo {
-	return withErrorHandling(() => {
+	return with_error_handling(() => {
 		const config = get_config();
-		const resolvedSourcePath = validateDatabasePath(sourcePath);
+		const resolved_source_path = validate_database_path(source_path);
 
 		// Generate backup path if not provided
-		let resolvedBackupPath: string;
-		if (backupPath) {
-			resolvedBackupPath = validateDatabasePath(backupPath);
+		let resolved_backup_path: string;
+		if (backup_path) {
+			resolved_backup_path = validate_database_path(backup_path);
 		} else {
 			const timestamp = new Date()
 				.toISOString()
 				.replace(/[:.]/g, '-');
-			const baseName =
-				resolvedSourcePath.split('/').pop()?.replace('.db', '') ||
+			const base_name =
+				resolved_source_path.split('/').pop()?.replace('.db', '') ||
 				'database';
-			resolvedBackupPath = resolve(
+			resolved_backup_path = resolve(
 				config.SQLITE_BACKUP_PATH,
-				`${baseName}-${timestamp}.db`,
+				`${base_name}-${timestamp}.db`,
 			);
 		}
 
 		// Ensure backup directory exists
-		const backupDir = dirname(resolvedBackupPath);
-		if (!existsSync(backupDir)) {
-			mkdirSync(backupDir, { recursive: true });
+		const backup_dir = dirname(resolved_backup_path);
+		if (!existsSync(backup_dir)) {
+			mkdirSync(backup_dir, { recursive: true });
 		}
 
 		try {
 			// Copy the database file
-			copyFileSync(resolvedSourcePath, resolvedBackupPath);
+			copyFileSync(resolved_source_path, resolved_backup_path);
 
 			// Get backup file size
-			const stats = statSync(resolvedBackupPath);
+			const stats = statSync(resolved_backup_path);
 
-			const backupInfo: BackupInfo = {
-				source: resolvedSourcePath,
-				destination: resolvedBackupPath,
+			const backup_info: BackupInfo = {
+				source: resolved_source_path,
+				destination: resolved_backup_path,
 				timestamp: new Date().toISOString(),
 				size: stats.size,
 			};
 
-			debug_log('Created database backup:', backupInfo);
-			return backupInfo;
+			debug_log('Created database backup:', backup_info);
+			return backup_info;
 		} catch (error) {
-			throw convertSqliteError(error, resolvedSourcePath);
+			throw convert_sqlite_error(error, resolved_source_path);
 		}
-	}, 'backupDatabase')();
+	}, 'backup_database')();
 }
 
 /**
  * Vacuum the database to optimize storage
  */
-export function vacuumDatabase(databasePath: string): void {
-	return withErrorHandling(() => {
-		const db = openDatabase(databasePath);
+export function vacuum_database(database_path: string): void {
+	return with_error_handling(() => {
+		const db = open_database(database_path);
 
 		try {
-			debug_log('Vacuuming database:', databasePath);
+			debug_log('Vacuuming database:', database_path);
 			db.exec('VACUUM');
 		} catch (error) {
-			throw convertSqliteError(error, databasePath);
+			throw convert_sqlite_error(error, database_path);
 		}
-	}, 'vacuumDatabase')();
+	}, 'vacuum_database')();
 }
 
 /**
  * Check if a query is read-only
  */
-export function isReadOnlyQuery(query: string): boolean {
-	const normalizedQuery = query.trim().toLowerCase();
+export function is_read_only_query(query: string): boolean {
+	const normalized_query = query.trim().toLowerCase();
 
 	// Allow SELECT and PRAGMA statements
 	return (
-		normalizedQuery.startsWith('select') ||
-		normalizedQuery.startsWith('pragma') ||
-		normalizedQuery.startsWith('explain')
+		normalized_query.startsWith('select') ||
+		normalized_query.startsWith('pragma') ||
+		normalized_query.startsWith('explain')
 	);
 }
 
 /**
  * Check if a query is a schema modification
  */
-export function isSchemaQuery(query: string): boolean {
-	const normalizedQuery = query.trim().toLowerCase();
+export function is_schema_query(query: string): boolean {
+	const normalized_query = query.trim().toLowerCase();
 
 	return (
-		normalizedQuery.startsWith('create') ||
-		normalizedQuery.startsWith('drop') ||
-		normalizedQuery.startsWith('alter')
+		normalized_query.startsWith('create') ||
+		normalized_query.startsWith('drop') ||
+		normalized_query.startsWith('alter')
 	);
 }
 
 /**
  * List database files in a directory
  */
-export function listDatabaseFiles(directory?: string): Array<{
+export function list_database_files(directory?: string): Array<{
 	name: string;
 	path: string;
 	size: number;
 	modified: string;
 }> {
-	return withErrorHandling(() => {
+	return with_error_handling(() => {
 		const config = get_config();
 
 		// Use provided directory or default
-		const searchDir = directory
-			? validateDatabasePath(directory)
+		const search_dir = directory
+			? validate_database_path(directory)
 			: config.SQLITE_DEFAULT_PATH;
 
-		if (!existsSync(searchDir)) {
-			throw new Error(`Directory does not exist: ${searchDir}`);
+		if (!existsSync(search_dir)) {
+			throw new Error(`Directory does not exist: ${search_dir}`);
 		}
 
-		const files = readdirSync(searchDir);
-		const databaseFiles: Array<{
+		const files = readdirSync(search_dir);
+		const database_files: Array<{
 			name: string;
 			path: string;
 			size: number;
@@ -460,16 +462,16 @@ export function listDatabaseFiles(directory?: string): Array<{
 				file.endsWith('.sqlite') ||
 				file.endsWith('.sqlite3')
 			) {
-				const filePath = resolve(searchDir, file);
+				const file_path = resolve(search_dir, file);
 
 				try {
-					const stats = statSync(filePath);
+					const stats = statSync(file_path);
 
 					// Only include regular files
 					if (stats.isFile()) {
-						databaseFiles.push({
+						database_files.push({
 							name: file,
-							path: filePath,
+							path: file_path,
 							size: stats.size,
 							modified: stats.mtime.toISOString(),
 						});
@@ -486,14 +488,14 @@ export function listDatabaseFiles(directory?: string): Array<{
 		}
 
 		// Sort by name
-		databaseFiles.sort((a, b) => a.name.localeCompare(b.name));
+		database_files.sort((a, b) => a.name.localeCompare(b.name));
 
-		debug_log('Found database files:', databaseFiles);
-		return databaseFiles;
-	}, 'listDatabaseFiles')();
+		debug_log('Found database files:', database_files);
+		return database_files;
+	}, 'list_database_files')();
 }
 
 // Cleanup on process exit
-process.on('exit', closeAllDatabases);
-process.on('SIGINT', closeAllDatabases);
-process.on('SIGTERM', closeAllDatabases);
+process.on('exit', close_all_databases);
+process.on('SIGINT', close_all_databases);
+process.on('SIGTERM', close_all_databases);

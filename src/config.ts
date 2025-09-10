@@ -38,7 +38,7 @@ export type Config = v.InferOutput<typeof ConfigSchema>;
  * Resolve paths relative to current working directory
  * This allows users to specify workspace-relative paths
  */
-function resolveDatabasePath(path: string): string {
+function resolve_database_path(path: string): string {
 	// If it's already absolute, return as-is
 	if (resolve(path) === path) {
 		return path;
@@ -75,10 +75,10 @@ export function load_config(): Config {
 		// Resolve paths relative to current working directory (workspace)
 		return {
 			...configWithDefaults,
-			SQLITE_DEFAULT_PATH: resolveDatabasePath(
+			SQLITE_DEFAULT_PATH: resolve_database_path(
 				configWithDefaults.SQLITE_DEFAULT_PATH,
 			),
-			SQLITE_BACKUP_PATH: resolveDatabasePath(
+			SQLITE_BACKUP_PATH: resolve_database_path(
 				configWithDefaults.SQLITE_BACKUP_PATH,
 			),
 		};

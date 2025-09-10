@@ -31,10 +31,10 @@ export interface DatabaseInfo {
 	path: string;
 	size: number;
 	tables: number;
-	pageSize: number;
-	pageCount: number;
+	page_size: number;
+	page_count: number;
 	encoding: string;
-	userVersion: number;
+	user_version: number;
 }
 
 // Backup information
