@@ -1,5 +1,17 @@
 # mcp-sqlite-tools
 
+## 0.0.10
+
+### Patch Changes
+
+- c2406e8: refactor error and helper functions
+- 3653a99: add bulk insert, transactions, schema export and connection
+  pooling
+- bb6669c: snek case refactor
+- b790a4c: fix parameter binding and add list_databases
+- 06da826: use tmcp in place of @modelcontextprotocol/sdk
+- 94ac60e: add helper functions for response and errors
+
 ## 0.0.9
 
 ### Patch Changes
