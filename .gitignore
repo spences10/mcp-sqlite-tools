@@ -104,3 +104,6 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# MCP registry authentication files
+.mcpregistry_*

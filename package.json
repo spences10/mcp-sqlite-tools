@@ -38,6 +38,7 @@
 	],
 	"author": "Scott Spence",
 	"license": "MIT",
+	"mcpName": "io.github.spences10/mcp-sqlite-tools",
 	"devDependencies": {
 		"@changesets/cli": "^2.29.7",
 		"@types/better-sqlite3": "^7.6.13",
