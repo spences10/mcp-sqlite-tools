@@ -1,5 +1,11 @@
 # mcp-sqlite-tools
 
+## 0.0.11
+
+### Patch Changes
+
+- 65a51a9: set up for mcp registry
+
 ## 0.0.10
 
 ### Patch Changes

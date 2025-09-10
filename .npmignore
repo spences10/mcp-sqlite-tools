@@ -32,4 +32,8 @@ Thumbs.db
 .prettierignore
 
 # docs
-docs/
+docs/server.json
+
+# MCP registry files
+server.json
+.mcpregistry_*

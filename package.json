@@ -1,6 +1,6 @@
 {
 	"name": "mcp-sqlite-tools",
-	"version": "0.0.10",
+	"version": "0.0.11",
 	"description": "MCP server for local SQLite database operations",
 	"type": "module",
 	"main": "dist/index.js",
@@ -23,7 +23,9 @@
 		"format:check": "prettier --check .",
 		"changeset": "changeset",
 		"version": "changeset version",
-		"release": "pnpm run build && changeset publish"
+		"release": "pnpm run build && changeset publish",
+		"publish-mcp": "pnpm run sync-server-json && mcp-publisher publish",
+		"sync-server-json": "node -e \"const pkg = require('./package.json'); const server = require('./server.json'); server.version = pkg.version; server.packages[0].version = pkg.version; require('fs').writeFileSync('./server.json', JSON.stringify(server, null, 2));\""
 	},
 	"keywords": [
 		"mcp",
