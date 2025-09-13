@@ -1,5 +1,11 @@
 # mcp-sqlite-tools
 
+## 0.0.12
+
+### Patch Changes
+
+- c0ba531: update tool descriptions
+
 ## 0.0.11
 
 ### Patch Changes
