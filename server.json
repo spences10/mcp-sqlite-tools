@@ -1,22 +1,22 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
-  "name": "io.github.spences10/mcp-sqlite-tools",
-  "description": "MCP server for local SQLite database operations",
-  "status": "active",
-  "repository": {
-    "url": "https://github.com/spences10/mcp-sqlite-tools",
-    "source": "github"
-  },
-  "version": "0.0.11",
-  "packages": [
-    {
-      "registry_type": "npm",
-      "registry_base_url": "https://registry.npmjs.org",
-      "identifier": "mcp-sqlite-tools",
-      "version": "0.0.11",
-      "transport": {
-        "type": "stdio"
-      }
-    }
-  ]
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+	"name": "io.github.spences10/mcp-sqlite-tools",
+	"description": "MCP server for local SQLite database operations",
+	"status": "active",
+	"repository": {
+		"url": "https://github.com/spences10/mcp-sqlite-tools",
+		"source": "github"
+	},
+	"version": "0.0.11",
+	"packages": [
+		{
+			"registry_type": "npm",
+			"registry_base_url": "https://registry.npmjs.org",
+			"identifier": "mcp-sqlite-tools",
+			"version": "0.0.11",
+			"transport": {
+				"type": "stdio"
+			}
+		}
+	]
 }
