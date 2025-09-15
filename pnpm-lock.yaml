@@ -14,9 +14,6 @@ importers:
       '@tmcp/transport-stdio':
         specifier: ^0.1.3
         version: 0.1.3(tmcp@1.12.2(typescript@5.9.2))
-      '@valibot/to-json-schema':
-        specifier: ^1.3.0
-        version: 1.3.0(valibot@1.1.0(typescript@5.9.2))
       better-sqlite3:
         specifier: ^12.2.0
         version: 12.2.0
