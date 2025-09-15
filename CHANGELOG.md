@@ -1,5 +1,11 @@
 # mcp-sqlite-tools
 
+## 0.0.13
+
+### Patch Changes
+
+- 0114f50: add @valibot/to-json-schema dependency
+
 ## 0.0.12
 
 ### Patch Changes

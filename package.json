@@ -1,6 +1,6 @@
 {
 	"name": "mcp-sqlite-tools",
-	"version": "0.0.12",
+	"version": "0.0.13",
 	"description": "MCP server for local SQLite database operations",
 	"type": "module",
 	"main": "dist/index.js",
