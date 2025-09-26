@@ -50,7 +50,7 @@
 	},
 	"dependencies": {
 		"@tmcp/adapter-valibot": "^0.1.4",
-		"@tmcp/transport-stdio": "^0.2.0",
+		"@tmcp/transport-stdio": "^0.3.0",
 		"better-sqlite3": "^12.3.0",
 		"csv-parser": "^3.2.0",
 		"csv-writer": "^1.6.0",
