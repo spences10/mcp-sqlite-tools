@@ -178,6 +178,126 @@ export function is_schema_query(query: string): boolean {
 }
 
 /**
+ * Parse and validate multi-statement SQL
+ * Returns array of individual SQL statements
+ */
+export function parse_sql_statements(sql: string): string[] {
+	// Split by semicolons and clean up each statement
+	const statements = sql
+		.split(';')
+		.map((stmt) => {
+			// Remove SQL comments (-- style and /* */ style)
+			let cleaned = stmt;
+			// Remove single-line comments
+			cleaned = cleaned.replace(/--[^\n]*/g, '');
+			// Remove multi-line comments
+			cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
+			return cleaned.trim();
+		})
+		.filter((stmt) => stmt.length > 0);
+
+	return statements;
+}
+
+/**
+ * Execute multiple schema statements atomically
+ */
+export function execute_schema_statements(
+	database_path: string,
+	sql: string,
+	params: Record<string, any> = {},
+): {
+	statements_executed: number;
+	total_changes: number;
+	statements: string[];
+} {
+	return with_error_handling(() => {
+		const db = open_database(database_path);
+
+		// Parse the SQL into individual statements
+		const statements = parse_sql_statements(sql);
+
+		if (statements.length === 0) {
+			throw new Error('No valid SQL statements found');
+		}
+
+		// Validate that all statements are schema queries
+		const non_schema_statements = statements.filter(
+			(stmt) => !is_schema_query(stmt),
+		);
+		if (non_schema_statements.length > 0) {
+			throw new Error(
+				`Only DDL queries (CREATE, ALTER, DROP) are allowed with execute_schema_query. Found ${non_schema_statements.length} non-DDL statement(s). First non-DDL statement: ${non_schema_statements[0].substring(0, 100)}`,
+			);
+		}
+
+		let statements_executed = 0;
+		let total_changes = 0;
+		const use_transaction = !has_active_transaction(database_path);
+
+		try {
+			debug_log('Executing schema statements:', {
+				database_path,
+				statement_count: statements.length,
+				use_transaction,
+			});
+
+			// Start transaction if needed
+			if (use_transaction && statements.length > 1) {
+				db.exec('BEGIN');
+			}
+
+			// Execute each statement
+			for (let i = 0; i < statements.length; i++) {
+				const statement = statements[i];
+
+				try {
+					debug_log('Executing schema statement:', {
+						index: i + 1,
+						total: statements.length,
+						statement: statement.substring(0, 100),
+					});
+
+					const stmt = db.prepare(statement);
+					const converted_params = convert_parameters(params);
+					const result = stmt.run(converted_params);
+
+					total_changes += result.changes;
+					statements_executed++;
+				} catch (error) {
+					throw new Error(
+						`Failed to execute statement ${i + 1} of ${statements.length}: ${error instanceof Error ? error.message : String(error)}\nStatement: ${statement.substring(0, 200)}`,
+					);
+				}
+			}
+
+			// Commit transaction if needed
+			if (use_transaction && statements.length > 1) {
+				db.exec('COMMIT');
+			}
+
+			debug_log('Schema statements executed successfully:', {
+				statements_executed,
+				total_changes,
+			});
+
+			return { statements_executed, total_changes, statements };
+		} catch (error) {
+			// Rollback transaction on error
+			if (use_transaction && statements.length > 1) {
+				try {
+					db.exec('ROLLBACK');
+					debug_log('Transaction rolled back due to error');
+				} catch (rollback_error) {
+					debug_log('Error during rollback:', rollback_error);
+				}
+			}
+			throw convert_sqlite_error(error, database_path);
+		}
+	}, 'execute_schema_statements')();
+}
+
+/**
  * Bulk insert data into a table efficiently
  */
 export function bulk_insert(

@@ -208,7 +208,7 @@ export function register_query_tools(server: McpServer<any>): void {
 		{
 			name: 'execute_schema_query',
 			description:
-				'⚠️ SCHEMA CHANGE: Execute DDL queries (CREATE, ALTER, DROP) that modify database structure. Changes table schemas, indexes, views, and triggers. These operations may lock tables and cannot be rolled back in all cases. Validate queries carefully before execution.',
+				'⚠️ SCHEMA CHANGE: Execute DDL queries (CREATE, ALTER, DROP) that modify database structure. Supports both single and multi-statement SQL (separated by semicolons). Changes table schemas, indexes, views, and triggers. Multi-statement execution is atomic - all statements succeed or all are rolled back. SQL comments (-- and /* */) are automatically stripped. These operations may lock tables. Validate queries carefully before execution.',
 			schema: ExecuteQuerySchema,
 		},
 		async ({ query, params = {}, database_name }) => {
@@ -222,14 +222,8 @@ export function register_query_tools(server: McpServer<any>): void {
 				const database_path = resolve_database_name(database_name);
 				if (database_name) set_current_database(database_name);
 
-				// Validate that this is a schema query
-				if (!sqlite.is_schema_query(query)) {
-					throw new Error(
-						'Only DDL queries (CREATE, ALTER, DROP) are allowed with execute_schema_query',
-					);
-				}
-
-				const result = sqlite.execute_query(
+				// Execute schema statements (handles both single and multi-statement SQL)
+				const result = sqlite.execute_schema_statements(
 					database_path,
 					query,
 					params,
@@ -237,9 +231,13 @@ export function register_query_tools(server: McpServer<any>): void {
 
 				return create_tool_response({
 					database: database_path,
-					query,
-					result,
-					message: `⚠️ SCHEMA CHANGE COMPLETED: Database structure modified in '${database_path}'. Changes: ${result.changes}`,
+					statements_executed: result.statements_executed,
+					total_changes: result.total_changes,
+					statements: result.statements,
+					message:
+						result.statements_executed === 1
+							? `⚠️ SCHEMA CHANGE COMPLETED: Database structure modified in '${database_path}'. Changes: ${result.total_changes}`
+							: `⚠️ SCHEMA CHANGE COMPLETED: ${result.statements_executed} DDL statements executed in '${database_path}'. Total changes: ${result.total_changes}`,
 				});
 			} catch (error) {
 				return create_tool_error_response(error);

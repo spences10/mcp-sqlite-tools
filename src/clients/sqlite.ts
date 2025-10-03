@@ -25,10 +25,12 @@ import {
 	bulk_insert,
 	describe_table,
 	execute_query,
+	execute_schema_statements,
 	execute_select_query,
 	is_read_only_query,
 	is_schema_query,
 	list_tables,
+	parse_sql_statements,
 	vacuum_database,
 } from './query-executor.js';
 import { export_schema, import_schema } from './schema-manager.js';
@@ -40,6 +42,7 @@ export {
 	close_database,
 	describe_table,
 	execute_query,
+	execute_schema_statements,
 	execute_select_query,
 	export_schema,
 	import_schema,
@@ -47,6 +50,7 @@ export {
 	is_schema_query,
 	list_tables,
 	open_database,
+	parse_sql_statements,
 	vacuum_database,
 	validate_database_path,
 };

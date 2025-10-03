@@ -397,13 +397,39 @@ Executes SQL that modifies data (INSERT, UPDATE, DELETE).
 
 #### `execute_schema_query`
 
-Executes DDL queries (CREATE, ALTER, DROP).
+Executes DDL queries (CREATE, ALTER, DROP) that modify database structure.
+Supports both single and multi-statement SQL (separated by semicolons).
+
+**Features:**
+
+- Single or multiple DDL statements in one call
+- Automatic SQL comment stripping (`--` and `/* */` styles)
+- Atomic execution: all statements succeed or all are rolled back
+- Validates that all statements are DDL (no DML/DQL mixed in)
 
 **Parameters:**
 
-- `query` (string, required): DDL SQL query
+- `query` (string, required): DDL SQL query (single or multiple statements)
 - `params` (object, optional): Query parameters
 - `database` (string, optional): Database path
+
+**Examples:**
+
+Single statement:
+
+```json
+{
+	"query": "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)"
+}
+```
+
+Multiple statements:
+
+```json
+{
+	"query": "-- Create schema\nCREATE TABLE contacts (id TEXT PRIMARY KEY, name TEXT NOT NULL);\nCREATE TABLE interactions (id TEXT PRIMARY KEY, contact_id TEXT NOT NULL);\nCREATE INDEX idx_contacts_name ON contacts(name);"
+}
+```
 
 #### `bulk_insert`
 
