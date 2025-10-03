@@ -1,5 +1,12 @@
 # mcp-sqlite-tools
 
+## 0.0.15
+
+### Patch Changes
+
+- 6708a9f: chore: optimize tool descriptions to reduce context usage
+- b35a0d5: update docs
+
 ## 0.0.14
 
 ### Patch Changes
