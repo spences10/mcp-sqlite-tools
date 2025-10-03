@@ -135,7 +135,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'open_database',
 			description:
-				"✓ SAFE: Open or create a SQLite database file. Sets the database as current context for subsequent operations that don't specify a database parameter. Creates the file if it doesn't exist when create=true. Returns database information including file size, table count, and connection status.",
+				'✓ SAFE: Open/create database file. Sets as current context. Returns database info.',
 			schema: OpenDatabaseSchema,
 		},
 		async ({ path, create }) => {
@@ -161,7 +161,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'close_database',
 			description:
-				'✓ SAFE: Close a database connection and free associated resources. If no database parameter is provided, closes the current database connection. Does not affect the database file itself, only the active connection.',
+				"✓ SAFE: Close database connection and free resources. Doesn't affect file.",
 			schema: DatabaseOnlySchema,
 		},
 		async ({ database_name }) => {
@@ -187,7 +187,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'list_databases',
 			description:
-				'✓ SAFE: List available database files in a directory. Scans the specified directory (or current working directory if not provided) for .db, .sqlite, .sqlite3 files. Returns file paths, sizes, and modification dates. Limited to 100 results to prevent memory issues.',
+				'✓ SAFE: List .db/.sqlite/.sqlite3 files in directory. Returns paths, sizes, dates. Max 100 results.',
 			schema: ListDatabasesSchema,
 		},
 		async ({ directory }) => {
@@ -211,7 +211,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'database_info',
 			description:
-				'✓ SAFE: Get comprehensive information about a database including file size, table count, index count, and basic statistics. Uses the current database if no database parameter is provided. Does not read actual table data, only metadata from SQLite system tables.',
+				'✓ SAFE: Get database info (size, table/index counts, statistics). Metadata only, no data.',
 			schema: DatabaseOnlySchema,
 		},
 		async ({ database_name }) => {
@@ -236,7 +236,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'list_tables',
 			description:
-				'✓ SAFE: List all tables and views in a database with their types (table/view) and row counts. Uses the current database if no database parameter is provided. Supports pagination with limit (max 1000) and offset parameters. Use verbosity="summary" for just names and types, "detailed" for full information.',
+				'✓ SAFE: List tables/views with types and row counts. Supports pagination (max 1000). Use verbosity="summary" for names only.',
 			schema: DatabaseWithPaginationSchema,
 		},
 		async ({
@@ -295,7 +295,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'describe_table',
 			description:
-				'✓ SAFE: Get detailed schema information for a specific table including column names, types, constraints, and indexes. Shows primary keys, foreign keys, default values, and nullability constraints. Essential for understanding table structure before queries.',
+				'✓ SAFE: Get table schema (columns, types, constraints, indexes, keys, defaults, nullability).',
 			schema: DescribeTableSchema,
 		},
 		async ({ table, database_name, verbosity = 'detailed' }) => {
@@ -343,7 +343,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'create_table',
 			description:
-				'⚠️ SCHEMA CHANGE: Create a new table with specified columns and constraints. Supports primary keys, default values, and NOT NULL constraints. Table name must be unique within the database. Will fail if table already exists.',
+				'⚠️ SCHEMA CHANGE: Create table with columns and constraints. Supports primary keys, defaults, NOT NULL. Fails if exists.',
 			schema: CreateTableSchema,
 		},
 		async ({ name, columns, database_name }) => {
@@ -393,7 +393,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'drop_table',
 			description:
-				'⚠️ DESTRUCTIVE: Permanently delete a table and all its data. This operation cannot be undone and will remove the table structure, all rows, indexes, and triggers associated with the table. Use with extreme caution.',
+				'⚠️ DESTRUCTIVE: Permanently delete table and all data. Cannot be undone. Removes structure, rows, indexes, triggers.',
 			schema: DropTableSchema,
 		},
 		async ({ table, database_name }) => {
@@ -428,7 +428,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'backup_database',
 			description:
-				'✓ SAFE: Create a complete backup copy of a database to a new file. Copies all tables, data, indexes, and schema. If no backup path is specified, creates a timestamped backup in the same directory. Backup is atomic and safe to run on active databases.',
+				'✓ SAFE: Create complete backup copy. Copies all tables, data, indexes, schema. Auto-timestamps if no path specified.',
 			schema: BackupDatabaseSchema,
 		},
 		async ({ source_database_name, backup_path }) => {
@@ -463,7 +463,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'vacuum_database',
 			description:
-				'✓ MAINTENANCE: Optimize database storage by reclaiming unused space and defragmenting pages. Rebuilds the database file to reduce size and improve performance. Can take significant time on large databases and requires free space equal to database size.',
+				'✓ MAINTENANCE: Optimize storage by reclaiming space and defragmenting. Requires free space equal to database size.',
 			schema: DatabaseOnlySchema,
 		},
 		async ({ database_name }) => {

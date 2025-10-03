@@ -46,7 +46,7 @@ export function register_schema_tools(server: McpServer<any>): void {
 		{
 			name: 'export_schema',
 			description:
-				'✓ SAFE: Export database schema as SQL DDL statements or structured JSON. Includes table definitions, indexes, views, and triggers. Can export specific tables or entire database. SQL format is suitable for recreation, JSON format for analysis and documentation.',
+				'✓ SAFE: Export schema as SQL or JSON. Includes tables, indexes, views, triggers. SQL for recreation, JSON for analysis.',
 			schema: ExportSchemaSchema,
 		},
 		async ({ database_name, format = 'sql', tables }) => {
@@ -85,7 +85,7 @@ export function register_schema_tools(server: McpServer<any>): void {
 		{
 			name: 'import_schema',
 			description:
-				'⚠️ SCHEMA CHANGE: Import and execute schema from SQL DDL statements or JSON structure. Creates tables, indexes, views, and triggers as defined in the schema. Will fail if objects already exist unless using IF NOT EXISTS clauses. Validate schema before importing.',
+				'⚠️ SCHEMA CHANGE: Import schema from SQL or JSON. Creates tables, indexes, views, triggers. Fails if objects exist without IF NOT EXISTS.',
 			schema: ImportSchemaSchema,
 		},
 		async ({ database_name, schema, format = 'sql' }) => {

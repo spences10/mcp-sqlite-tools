@@ -69,7 +69,7 @@ export function register_query_tools(server: McpServer<any>): void {
 		{
 			name: 'execute_read_query',
 			description:
-				'✓ SAFE: Execute read-only SQL queries (SELECT, PRAGMA, EXPLAIN) that cannot modify data. Supports parameterized queries for security. Returns up to 10,000 rows by default (configurable via limit parameter). Supports pagination with offset parameter. Use verbosity="summary" for row count only, "detailed" for full results.',
+				'✓ SAFE: Execute read-only SQL (SELECT, PRAGMA, EXPLAIN). Supports parameterized queries. Default limit 10,000 rows. Use verbosity="summary" for counts only.',
 			schema: ExecuteReadQuerySchema,
 		},
 		async ({
@@ -160,7 +160,7 @@ export function register_query_tools(server: McpServer<any>): void {
 		{
 			name: 'execute_write_query',
 			description:
-				'⚠️ DESTRUCTIVE: Execute SQL that modifies data (INSERT, UPDATE, DELETE) but not schema. Supports parameterized queries to prevent SQL injection. Returns affected row count and execution statistics. Use transactions for multiple related changes.',
+				'⚠️ DESTRUCTIVE: Execute data modification SQL (INSERT, UPDATE, DELETE). Supports parameterized queries. Returns affected row count.',
 			schema: ExecuteQuerySchema,
 		},
 		async ({ query, params = {}, database_name }) => {
@@ -208,7 +208,7 @@ export function register_query_tools(server: McpServer<any>): void {
 		{
 			name: 'execute_schema_query',
 			description:
-				'⚠️ SCHEMA CHANGE: Execute DDL queries (CREATE, ALTER, DROP) that modify database structure. Changes table schemas, indexes, views, and triggers. These operations may lock tables and cannot be rolled back in all cases. Validate queries carefully before execution.',
+				'⚠️ SCHEMA CHANGE: Execute DDL (CREATE, ALTER, DROP). Modifies database structure. May lock tables.',
 			schema: ExecuteQuerySchema,
 		},
 		async ({ query, params = {}, database_name }) => {
@@ -251,7 +251,7 @@ export function register_query_tools(server: McpServer<any>): void {
 		{
 			name: 'bulk_insert',
 			description:
-				'⚠️ DESTRUCTIVE: Insert multiple records efficiently in batches using prepared statements. Processes data in configurable batch sizes (default 1000) for optimal performance. All records must have identical column structures. Use transactions for atomicity across all batches.',
+				'⚠️ DESTRUCTIVE: Insert multiple records in batches. Default batch size 1000. All records must have identical columns.',
 			schema: BulkInsertSchema,
 		},
 		async ({ table, data, batch_size = 1000, database_name }) => {

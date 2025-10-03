@@ -33,7 +33,7 @@ export function register_transaction_tools(
 		{
 			name: 'begin_transaction',
 			description:
-				'⚠️ TRANSACTION: Begin a database transaction for atomic operations. Groups multiple queries into a single unit that either succeeds completely or fails completely. Required before executing multiple related write operations. Locks may be held until commit/rollback.',
+				'⚠️ TRANSACTION: Begin transaction for atomic operations. Groups queries into single unit. Holds locks until commit/rollback.',
 			schema: TransactionSchema,
 		},
 		async ({ database_name }) => {
@@ -63,7 +63,7 @@ export function register_transaction_tools(
 		{
 			name: 'commit_transaction',
 			description:
-				'✓ TRANSACTION: Commit the current database transaction, making all changes permanent. All queries executed since begin_transaction become visible to other connections. Releases any held locks. Must be called to save changes from a transaction.',
+				'✓ TRANSACTION: Commit transaction, making changes permanent. Releases locks.',
 			schema: TransactionSchema,
 		},
 		async ({ database_name }) => {
@@ -94,7 +94,7 @@ export function register_transaction_tools(
 		{
 			name: 'rollback_transaction',
 			description:
-				'⚠️ TRANSACTION: Rollback the current database transaction, discarding all changes. All queries executed since begin_transaction are undone and the database returns to its previous state. Use when errors occur or changes need to be cancelled.',
+				'⚠️ TRANSACTION: Rollback transaction, discarding all changes. Returns database to previous state.',
 			schema: TransactionSchema,
 		},
 		async ({ database_name }) => {
