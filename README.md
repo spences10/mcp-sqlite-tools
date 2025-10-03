@@ -397,8 +397,9 @@ Executes SQL that modifies data (INSERT, UPDATE, DELETE).
 
 #### `execute_schema_query`
 
-Executes DDL queries (CREATE, ALTER, DROP) that modify database structure.
-Supports both single and multi-statement SQL (separated by semicolons).
+Executes DDL queries (CREATE, ALTER, DROP) that modify database
+structure. Supports both single and multi-statement SQL (separated by
+semicolons).
 
 **Features:**
 
@@ -409,7 +410,8 @@ Supports both single and multi-statement SQL (separated by semicolons).
 
 **Parameters:**
 
-- `query` (string, required): DDL SQL query (single or multiple statements)
+- `query` (string, required): DDL SQL query (single or multiple
+  statements)
 - `params` (object, optional): Query parameters
 - `database` (string, optional): Database path
 
