@@ -71,6 +71,81 @@ This server implements multiple layers of security:
 - **Resource Cleanup**: Graceful cleanup on server shutdown with
   maintenance scheduling
 
+### Tool Separation for Hook-Based Safety
+
+The tools are intentionally separated into distinct categories to
+enable fine-grained approval control in MCP clients like Claude Code:
+
+**✓ SAFE Tools** (Read-only operations):
+
+- `execute_read_query` - SELECT, PRAGMA, EXPLAIN queries
+- `list_tables`, `describe_table`, `database_info`
+- `export_schema`, `backup_database`
+
+These tools can be auto-approved or approved once, allowing the AI to
+freely explore your database structure and read data.
+
+**⚠️ DESTRUCTIVE Tools** (Data modification):
+
+- `execute_write_query` - INSERT, UPDATE, DELETE
+- `bulk_insert` - Batch insertions
+- `drop_table` - Permanent table deletion
+
+These tools should require individual approval for each operation,
+giving you visibility into what data will be modified before it
+happens.
+
+**⚠️ SCHEMA CHANGE Tools** (Structure modification):
+
+- `execute_schema_query` - CREATE, ALTER, DROP statements
+- `create_table` - Table creation
+- `import_schema` - Schema import
+
+These tools modify database structure and should require individual
+approval to prevent unintended schema changes.
+
+**🔒 TRANSACTION Tools**:
+
+- `begin_transaction`, `commit_transaction`, `rollback_transaction`
+
+Can be configured based on your workflow needs.
+
+**Example Claude Code Hook Configuration:**
+
+```javascript
+// In your Claude Code hooks
+export function toolApproval(tool) {
+	// Auto-approve safe read operations
+	if (
+		tool.name.includes('read') ||
+		tool.name.includes('list') ||
+		tool.name.includes('describe') ||
+		tool.name.includes('export') ||
+		tool.name.includes('backup') ||
+		tool.name.includes('info')
+	) {
+		return 'auto-approve';
+	}
+
+	// Require approval for destructive operations
+	if (
+		tool.name.includes('write') ||
+		tool.name.includes('delete') ||
+		tool.name.includes('drop') ||
+		tool.name.includes('insert') ||
+		tool.name.includes('schema')
+	) {
+		return 'require-approval';
+	}
+
+	return 'require-approval'; // Default to safe
+}
+```
+
+This separation ensures you maintain control over destructive
+operations while allowing the AI to work efficiently with read-only
+queries.
+
 ## Installation
 
 ### From npm (when published)
@@ -297,6 +372,58 @@ Gets schema information for a table.
 
 - `table` (string, required): Table name
 - `database` (string, optional): Database path
+- `verbosity` (string, optional): 'summary' or 'detailed' (default:
+  'detailed')
+
+**Example Request:**
+
+```json
+{
+	"table": "users",
+	"verbosity": "detailed"
+}
+```
+
+**Example Response:**
+
+```json
+{
+	"database": "/tmp/demo.db",
+	"table": "users",
+	"columns": [
+		{
+			"name": "id",
+			"type": "INTEGER",
+			"nullable": true,
+			"default_value": null,
+			"primary_key": true
+		},
+		{
+			"name": "name",
+			"type": "TEXT",
+			"nullable": false,
+			"default_value": null,
+			"primary_key": false
+		},
+		{
+			"name": "email",
+			"type": "TEXT",
+			"nullable": true,
+			"default_value": null,
+			"primary_key": false
+		},
+		{
+			"name": "created_at",
+			"type": "TIMESTAMP",
+			"nullable": true,
+			"default_value": "CURRENT_TIMESTAMP",
+			"primary_key": false
+		}
+	],
+	"verbosity": "detailed",
+	"column_count": 4
+}
+```
 
 #### `create_table`
 
@@ -366,13 +493,52 @@ Executes read-only SQL queries (SELECT, PRAGMA, EXPLAIN).
 - `query` (string, required): SQL query
 - `params` (object, optional): Query parameters
 - `database` (string, optional): Database path
+- `limit` (number, optional): Maximum rows to return (default: 10000)
+- `offset` (number, optional): Number of rows to skip (default: 0)
+- `verbosity` (string, optional): 'summary' or 'detailed' (default:
+  'detailed')
 
-**Example:**
+**Example Request:**
 
 ```json
 {
-	"query": "SELECT * FROM users WHERE age > ?",
-	"params": { "1": 21 }
+	"query": "SELECT * FROM users ORDER BY id",
+	"verbosity": "detailed"
+}
+```
+
+**Example Response:**
+
+```json
+{
+	"database": "/tmp/demo.db",
+	"query": "SELECT * FROM users ORDER BY id LIMIT 10000",
+	"result": {
+		"rows": [
+			{
+				"id": 1,
+				"name": "Alice Johnson",
+				"email": "alice@example.com",
+				"created_at": "2025-10-03 09:42:04"
+			},
+			{
+				"id": 3,
+				"name": "Carol White",
+				"email": "carol@example.com",
+				"created_at": "2025-10-03 09:42:10"
+			}
+		],
+		"changes": 0,
+		"lastInsertRowid": 0
+	},
+	"row_count": 2,
+	"pagination": {
+		"limit": 10000,
+		"offset": 0,
+		"returned_count": 2,
+		"has_more": false
+	},
+	"verbosity": "detailed"
 }
 ```
 
@@ -386,12 +552,26 @@ Executes SQL that modifies data (INSERT, UPDATE, DELETE).
 - `params` (object, optional): Query parameters
 - `database` (string, optional): Database path
 
-**Example:**
+**Example Request:**
 
 ```json
 {
-	"query": "INSERT INTO users (name, email) VALUES (?, ?)",
-	"params": { "1": "John Doe", "2": "john@example.com" }
+	"query": "INSERT INTO users (name, email) VALUES ('Alice Smith', 'alice@example.com')"
+}
+```
+
+**Example Response:**
+
+```json
+{
+	"database": "/tmp/demo.db",
+	"query": "INSERT INTO users (name, email) VALUES ('Alice Smith', 'alice@example.com')",
+	"result": {
+		"rows": [],
+		"changes": 1,
+		"lastInsertRowid": 1
+	},
+	"message": "⚠️ DESTRUCTIVE OPERATION COMPLETED: Data modified in database '/tmp/demo.db'. Rows affected: 1"
 }
 ```
 
@@ -405,6 +585,29 @@ Executes DDL queries (CREATE, ALTER, DROP).
 - `params` (object, optional): Query parameters
 - `database` (string, optional): Database path
 
+**Example Request:**
+
+```json
+{
+	"query": "CREATE TABLE users (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  name TEXT NOT NULL,\n  email TEXT UNIQUE,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n)"
+}
+```
+
+**Example Response:**
+
+```json
+{
+	"database": "/tmp/demo.db",
+	"query": "CREATE TABLE users (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  name TEXT NOT NULL,\n  email TEXT UNIQUE,\n  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n)",
+	"result": {
+		"rows": [],
+		"changes": 0,
+		"lastInsertRowid": 0
+	},
+	"message": "⚠️ SCHEMA CHANGE COMPLETED: Database structure modified in '/tmp/demo.db'. Changes: 0"
+}
+```
+
 #### `bulk_insert`
 
 Insert multiple records in batches.
@@ -416,16 +619,30 @@ Insert multiple records in batches.
 - `batch_size` (number, optional): Records per batch (default: 1000)
 - `database` (string, optional): Database path
 
-**Example:**
+**Example Request:**
 
 ```json
 {
 	"table": "users",
 	"data": [
-		{ "name": "John Doe", "email": "john@example.com" },
-		{ "name": "Jane Smith", "email": "jane@example.com" }
-	],
-	"batch_size": 500
+		{ "name": "David Lee", "email": "david@example.com" },
+		{ "name": "Emma Davis", "email": "emma@example.com" },
+		{ "name": "Frank Miller", "email": "frank@example.com" }
+	]
+}
+```
+
+**Example Response:**
+
+```json
+{
+	"success": true,
+	"database": "/tmp/demo.db",
+	"table": "users",
+	"inserted": 3,
+	"batches": 1,
+	"total_time": 0,
+	"message": "⚠️ DESTRUCTIVE OPERATION COMPLETED: 3 records inserted into table 'users' in database '/tmp/demo.db'"
 }
 ```
 
