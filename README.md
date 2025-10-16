@@ -824,7 +824,7 @@ This modular design provides:
 
 ## Dependencies
 
-- **[tmcp](https://github.com/modelcontextprotocol/typescript-sdk)**:
+- **[tmcp](https://github.com/paoloricciuti/tmcp)**:
   Modern TypeScript MCP framework
 - **[better-sqlite3](https://github.com/WiseLibs/better-sqlite3)**:
   High-performance SQLite driver
