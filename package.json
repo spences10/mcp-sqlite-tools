@@ -42,19 +42,19 @@
 	"license": "MIT",
 	"mcpName": "io.github.spences10/mcp-sqlite-tools",
 	"devDependencies": {
-		"@changesets/cli": "^2.29.7",
+		"@changesets/cli": "^2.29.8",
 		"@types/better-sqlite3": "^7.6.13",
-		"@types/node": "^24.10.1",
-		"prettier": "^3.6.2",
+		"@types/node": "^24.10.2",
+		"prettier": "^3.7.4",
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
 		"@tmcp/adapter-valibot": "^0.1.5",
 		"@tmcp/transport-stdio": "^0.4.1",
-		"better-sqlite3": "^12.4.6",
+		"better-sqlite3": "^12.5.0",
 		"csv-parser": "^3.2.0",
 		"csv-writer": "^1.6.0",
 		"tmcp": "^1.18.1",
-		"valibot": "^1.1.0"
+		"valibot": "^1.2.0"
 	}
 }
