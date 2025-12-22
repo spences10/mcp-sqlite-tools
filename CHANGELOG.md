@@ -1,5 +1,12 @@
 # mcp-sqlite-tools
 
+## 0.0.16
+
+### Patch Changes
+
+- 7bae5aa: Auto-invalidate cached connections when database file
+  deleted or modified externally
+
 ## 0.0.15
 
 ### Patch Changes
