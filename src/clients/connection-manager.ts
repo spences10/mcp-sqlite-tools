@@ -2,7 +2,7 @@
  * Database connection management for SQLite Tools MCP server
  */
 import Database from 'better-sqlite3';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import {
 	DatabaseConnectionError,
@@ -18,6 +18,8 @@ interface ConnectionMetadata {
 	created_at: Date;
 	last_used: Date;
 	use_count: number;
+	file_mtime: number; // File modification time when connection opened
+	file_ino: number; // File inode to detect replacement
 }
 
 // Database connection pool with metadata
@@ -86,13 +88,54 @@ export function open_database(
 		// Check if database already exists in connection pool
 		if (connections.has(resolved_path)) {
 			const metadata = connections.get(resolved_path)!;
-			metadata.last_used = new Date();
-			metadata.use_count++;
-			debug_log('Reusing existing database connection:', {
-				path: resolved_path,
-				use_count: metadata.use_count,
-			});
-			return metadata.database;
+
+			// Verify file still exists and hasn't been replaced
+			let should_invalidate = false;
+			if (!existsSync(resolved_path)) {
+				debug_log('Invalidating connection - file deleted:', {
+					path: resolved_path,
+				});
+				should_invalidate = true;
+			} else {
+				try {
+					const stats = statSync(resolved_path);
+					if (
+						stats.mtimeMs !== metadata.file_mtime ||
+						stats.ino !== metadata.file_ino
+					) {
+						debug_log('Invalidating connection - file changed:', {
+							path: resolved_path,
+							old_mtime: metadata.file_mtime,
+							new_mtime: stats.mtimeMs,
+							old_ino: metadata.file_ino,
+							new_ino: stats.ino,
+						});
+						should_invalidate = true;
+					}
+				} catch {
+					// If we can't stat, invalidate to be safe
+					should_invalidate = true;
+				}
+			}
+
+			if (should_invalidate) {
+				// Close stale connection and remove from pool
+				try {
+					metadata.database.close();
+				} catch {
+					// Ignore close errors on stale connection
+				}
+				connections.delete(resolved_path);
+				// Fall through to create new connection
+			} else {
+				metadata.last_used = new Date();
+				metadata.use_count++;
+				debug_log('Reusing existing database connection:', {
+					path: resolved_path,
+					use_count: metadata.use_count,
+				});
+				return metadata.database;
+			}
 		}
 
 		// Check connection pool limits
@@ -135,6 +178,9 @@ export function open_database(
 			db.pragma('foreign_keys = ON');
 			db.pragma('temp_store = MEMORY');
 
+			// Capture file stats for change detection
+			const file_stats = statSync(resolved_path);
+
 			// Store connection with metadata in pool
 			const now = new Date();
 			const metadata: ConnectionMetadata = {
@@ -142,6 +188,8 @@ export function open_database(
 				created_at: now,
 				last_used: now,
 				use_count: 1,
+				file_mtime: file_stats.mtimeMs,
+				file_ino: file_stats.ino,
 			};
 			connections.set(resolved_path, metadata);
 
