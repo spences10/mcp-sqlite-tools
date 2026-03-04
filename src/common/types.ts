@@ -64,7 +64,10 @@ export interface QueryContext {
 // Tool input schemas (for Valibot validation)
 export interface OpenDatabaseInput {
 	path: string;
-	create?: boolean;
+}
+
+export interface CreateDatabaseInput {
+	path: string;
 }
 
 export interface ExecuteQueryInput {
