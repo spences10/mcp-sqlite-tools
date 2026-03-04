@@ -80,7 +80,7 @@ export function validate_database_path(path: string): string {
  */
 export function open_database(
 	path: string,
-	create: boolean = true,
+	create: boolean = false,
 ): Database.Database {
 	return with_error_handling(() => {
 		const resolved_path = validate_database_path(path);

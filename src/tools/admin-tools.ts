@@ -1,6 +1,7 @@
 /**
  * Database administration tools for the SQLite Tools MCP server
  */
+import { existsSync } from 'node:fs';
 import { McpServer } from 'tmcp';
 import * as v from 'valibot';
 import * as sqlite from '../clients/sqlite.js';
@@ -26,7 +27,10 @@ function setup_database_context(database?: string) {
 // Input validation schemas
 const OpenDatabaseSchema = v.object({
 	path: v.pipe(v.string(), v.minLength(1), v.maxLength(500)),
-	create: v.optional(v.boolean(), true),
+});
+
+const CreateDatabaseSchema = v.object({
+	path: v.pipe(v.string(), v.minLength(1), v.maxLength(500)),
 });
 
 // Valid SQLite column types
@@ -135,12 +139,12 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'open_database',
 			description:
-				'✓ SAFE: Open/create database file. Sets as current context. Returns database info.',
+				'✓ SAFE: Open an existing database file. Sets as current context. Returns database info. Errors if file does not exist — use create_database to make a new one.',
 			schema: OpenDatabaseSchema,
 		},
-		async ({ path, create }) => {
+		async ({ path }) => {
 			try {
-				debug_log('Executing tool: open_database', { path, create });
+				debug_log('Executing tool: open_database', { path });
 
 				set_current_database(path);
 
@@ -149,6 +153,45 @@ export function register_admin_tools(server: McpServer<any>): void {
 				return create_tool_response({
 					success: true,
 					message: `Database opened: ${path}`,
+					database: info,
+				});
+			} catch (error) {
+				return create_tool_error_response(error);
+			}
+		},
+	);
+
+	server.tool<typeof CreateDatabaseSchema>(
+		{
+			name: 'create_database',
+			description:
+				'⚠️ CREATES FILE: Create a new empty SQLite database at the given path. Errors if file already exists. Use open_database for existing databases.',
+			schema: CreateDatabaseSchema,
+		},
+		async ({ path }) => {
+			try {
+				debug_log('Executing tool: create_database', { path });
+
+				// Check if file already exists before creating
+				const resolved_path =
+					sqlite.validate_database_path(path);
+				if (existsSync(resolved_path)) {
+					return create_tool_error_response(
+						new Error(
+							`Database file already exists: ${resolved_path}. Use open_database to open an existing database.`,
+						),
+					);
+				}
+
+				// Create with create=true
+				sqlite.open_database(path, true);
+				set_current_database(path);
+
+				const info = sqlite.get_database_info(path);
+
+				return create_tool_response({
+					success: true,
+					message: `New database created: ${path}`,
 					database: info,
 				});
 			} catch (error) {
