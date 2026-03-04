@@ -824,8 +824,8 @@ This modular design provides:
 
 ## Dependencies
 
-- **[tmcp](https://github.com/paoloricciuti/tmcp)**:
-  Modern TypeScript MCP framework
+- **[tmcp](https://github.com/paoloricciuti/tmcp)**: Modern TypeScript
+  MCP framework
 - **[better-sqlite3](https://github.com/WiseLibs/better-sqlite3)**:
   High-performance SQLite driver
 - **[valibot](https://valibot.dev/)**: Lightweight validation library

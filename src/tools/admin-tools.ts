@@ -173,8 +173,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 				debug_log('Executing tool: create_database', { path });
 
 				// Check if file already exists before creating
-				const resolved_path =
-					sqlite.validate_database_path(path);
+				const resolved_path = sqlite.validate_database_path(path);
 				if (existsSync(resolved_path)) {
 					return create_tool_error_response(
 						new Error(
