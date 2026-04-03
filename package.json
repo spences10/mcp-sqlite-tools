@@ -46,7 +46,7 @@
 		"@types/better-sqlite3": "^7.6.13",
 		"@types/node": "^25.3.3",
 		"prettier": "^3.8.1",
-		"typescript": "^5.9.3"
+		"typescript": "^6.0.0"
 	},
 	"dependencies": {
 		"@tmcp/adapter-valibot": "^0.1.5",
