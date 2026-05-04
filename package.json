@@ -1,6 +1,6 @@
 {
 	"name": "mcp-sqlite-tools",
-	"version": "0.0.17",
+	"version": "0.0.18",
 	"description": "MCP server for local SQLite database operations",
 	"keywords": [
 		"ai",

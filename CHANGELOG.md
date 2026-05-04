@@ -1,5 +1,28 @@
 # mcp-sqlite-tools
 
+## 0.0.18
+
+### Patch Changes
+
+- dd25e15: Fix WAL-safe backups and replace misleading max query time
+  with explicit SQLite busy timeout.
+- e057e5e: Add CSV import/export tools with table creation, type
+  coercion, absolute paths, and row error reporting
+- edb51fa: Harden SQLite safety boundaries with readonly enforcement,
+  identifier quoting, schema filter parameterization, and regression
+  tests.
+- 554c936: Migrate build, test, lint, and formatting workflows from
+  TypeScript/Prettier to Vite+ and Vitest.
+- 935c861: Tighten schema import parsing, lifecycle side effects,
+  tool-boundary tests, package metadata, and documentation
+  consistency.
+- 2ef1a9c: Fix CSV option validation to only enforce single-character
+  delimiter, quote, and escape settings.
+- ae6430d: Refactor safety coverage into colocated tests and preserve
+  SQLite query, CSV, schema, config validations.
+- 78f6f01: Improve readonly violation errors with structured guidance
+  and ignore SQLite WAL/SHM sidecar files.
+
 ## 0.0.17
 
 ### Patch Changes
