@@ -8,6 +8,10 @@ import {
 	create_tool_error_response,
 	create_tool_response,
 } from '../common/errors.js';
+import {
+	should_paginate_read_query,
+	trim_trailing_semicolon,
+} from '../common/sql.js';
 import { debug_log } from '../config.js';
 import {
 	resolve_database_name,
@@ -93,25 +97,21 @@ export function register_query_tools(server: McpServer<any>): void {
 				const database_path = resolve_database_name(database_name);
 				if (database_name) set_current_database(database_name);
 
-				// Validate that this is a read-only query
-				if (!sqlite.is_read_only_query(query)) {
+				// Validate that this is a read-only query using SQLite's statement metadata.
+				if (!sqlite.is_read_only_query(query, database_path)) {
 					throw new Error(
-						'Only SELECT, PRAGMA, and EXPLAIN queries are allowed with execute_read_query',
+						'Only SQLite readonly statements are allowed with execute_read_query',
 					);
 				}
 
-				// Add LIMIT/OFFSET to query if not already present
-				let modified_query = query;
-				const query_lower = query.toLowerCase();
-				if (
-					!query_lower.includes('limit') &&
-					!query_lower.includes('offset')
-				) {
+				// Add LIMIT/OFFSET only to SELECT-style queries, not PRAGMA/EXPLAIN.
+				let modified_query = trim_trailing_semicolon(query);
+				if (should_paginate_read_query(modified_query)) {
 					const pagination_clause =
 						offset > 0
 							? `LIMIT ${limit} OFFSET ${offset}`
 							: `LIMIT ${limit}`;
-					modified_query = `${query.trim()} ${pagination_clause}`;
+					modified_query = `${modified_query} ${pagination_clause}`;
 				}
 
 				const result = sqlite.execute_select_query(
@@ -175,7 +175,7 @@ export function register_query_tools(server: McpServer<any>): void {
 				if (database_name) set_current_database(database_name);
 
 				// Validate that this is not a read-only query and not a schema query
-				if (sqlite.is_read_only_query(query)) {
+				if (sqlite.is_read_only_query(query, database_path)) {
 					throw new Error(
 						'SELECT, PRAGMA, and EXPLAIN queries should use execute_read_query',
 					);

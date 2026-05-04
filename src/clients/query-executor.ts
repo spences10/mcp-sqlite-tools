@@ -10,6 +10,10 @@ import {
 	QueryResult,
 	TableInfo,
 } from '../common/types.js';
+import {
+	looks_like_read_query,
+	quote_identifier,
+} from '../common/sql.js';
 import { debug_log } from '../config.js';
 import { open_database } from './connection-manager.js';
 import { has_active_transaction } from './transaction-manager.js';
@@ -17,7 +21,13 @@ import { has_active_transaction } from './transaction-manager.js';
 /**
  * Convert parameters to the format expected by better-sqlite3
  */
-function convert_parameters(params: Record<string, any>): any {
+function convert_parameters(
+	params: Record<string, any> | any[],
+): any {
+	if (Array.isArray(params)) {
+		return params;
+	}
+
 	if (!params || Object.keys(params).length === 0) {
 		return {};
 	}
@@ -49,7 +59,7 @@ function convert_parameters(params: Record<string, any>): any {
 export function execute_query(
 	database_path: string,
 	query: string,
-	params: Record<string, any> = {},
+	params: Record<string, any> | any[] = {},
 ): QueryResult {
 	return with_error_handling(() => {
 		const db = open_database(database_path);
@@ -79,7 +89,7 @@ export function execute_query(
 export function execute_select_query(
 	database_path: string,
 	query: string,
-	params: Record<string, any> = {},
+	params: Record<string, any> | any[] = {},
 ): QueryResult {
 	return with_error_handling(() => {
 		const db = open_database(database_path);
@@ -89,6 +99,11 @@ export function execute_select_query(
 
 			// Prepare and execute the statement
 			const stmt = db.prepare(query);
+			if (!stmt.readonly) {
+				throw new Error(
+					'Query is not read-only. Use execute_write_query or execute_schema_query for mutating SQL.',
+				);
+			}
 			const converted_params = convert_parameters(params);
 			const rows = stmt.all(converted_params);
 
@@ -127,7 +142,7 @@ export function describe_table(
 	return with_error_handling(() => {
 		const result = execute_select_query(
 			database_path,
-			`PRAGMA table_info(${table_name})`,
+			`PRAGMA table_info(${quote_identifier(table_name)})`,
 		);
 
 		return result.rows as ColumnInfo[];
@@ -153,15 +168,22 @@ export function vacuum_database(database_path: string): void {
 /**
  * Check if a query is read-only
  */
-export function is_read_only_query(query: string): boolean {
-	const normalized_query = query.trim().toLowerCase();
+export function is_read_only_query(
+	query: string,
+	database_path?: string,
+): boolean {
+	if (!looks_like_read_query(query)) return false;
 
-	// Allow SELECT and PRAGMA statements
-	return (
-		normalized_query.startsWith('select') ||
-		normalized_query.startsWith('pragma') ||
-		normalized_query.startsWith('explain')
-	);
+	if (!database_path) return true;
+
+	try {
+		const db = open_database(database_path);
+		return db.prepare(query).readonly;
+	} catch {
+		// Keep routing invalid read-looking SQL to the read path so SQLite can
+		// produce the actual syntax/table error during execution.
+		return looks_like_read_query(query);
+	}
 }
 
 /**
@@ -202,8 +224,8 @@ export function bulk_insert(
 
 		// Build the INSERT SQL with placeholders
 		const placeholders = columns.map(() => '?').join(', ');
-		const column_list = columns.join(', ');
-		const insert_sql = `INSERT INTO ${table} (${column_list}) VALUES (${placeholders})`;
+		const column_list = columns.map(quote_identifier).join(', ');
+		const insert_sql = `INSERT INTO ${quote_identifier(table)} (${column_list}) VALUES (${placeholders})`;
 
 		try {
 			debug_log('Bulk insert starting:', {

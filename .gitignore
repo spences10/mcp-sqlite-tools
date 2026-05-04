@@ -91,6 +91,7 @@ temp/
 
 # Editor directories and files
 .vscode/
+.zed/
 .idea/
 *.swp
 *.swo

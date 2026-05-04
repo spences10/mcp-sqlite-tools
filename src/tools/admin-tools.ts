@@ -9,6 +9,10 @@ import {
 	create_tool_error_response,
 	create_tool_response,
 } from '../common/errors.js';
+import {
+	format_default_value,
+	quote_identifier,
+} from '../common/sql.js';
 import { debug_log } from '../config.js';
 import {
 	resolve_database_name,
@@ -99,14 +103,6 @@ const ListDatabasesSchema = v.object({
 
 const DatabaseOnlySchema = v.object({
 	database_name: v.optional(v.pipe(v.string(), v.maxLength(255))),
-});
-
-const DatabaseWithVerbositySchema = v.object({
-	database_name: v.optional(v.pipe(v.string(), v.maxLength(255))),
-	verbosity: v.optional(
-		v.union([v.literal('summary'), v.literal('detailed')]),
-		'summary',
-	),
 });
 
 const DatabaseWithPaginationSchema = v.object({
@@ -399,19 +395,19 @@ export function register_admin_tools(server: McpServer<any>): void {
 				const database_path = resolve_database_name(database_name);
 				if (database_name) set_current_database(database_name);
 
-				// Build CREATE TABLE SQL
+				// Build CREATE TABLE SQL with quoted identifiers and literal defaults.
 				const column_defs = columns
 					.map((col) => {
-						let def = `${col.name} ${col.type}`;
+						let def = `${quote_identifier(col.name)} ${col.type}`;
 						if (col.primary_key) def += ' PRIMARY KEY';
 						if (!col.nullable) def += ' NOT NULL';
 						if (col.default_value !== undefined)
-							def += ` DEFAULT ${col.default_value}`;
+							def += ` DEFAULT ${format_default_value(col.default_value)}`;
 						return def;
 					})
 					.join(', ');
 
-				const create_sql = `CREATE TABLE ${name} (${column_defs})`;
+				const create_sql = `CREATE TABLE ${quote_identifier(name)} (${column_defs})`;
 				const result = sqlite.execute_query(
 					database_path,
 					create_sql,
@@ -448,7 +444,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 				const database_path = resolve_database_name(database_name);
 				if (database_name) set_current_database(database_name);
 
-				const drop_sql = `DROP TABLE ${table}`;
+				const drop_sql = `DROP TABLE ${quote_identifier(table)}`;
 				const result = sqlite.execute_query(database_path, drop_sql);
 
 				return create_tool_response({

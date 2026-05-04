@@ -27,15 +27,17 @@ export function export_schema(
 		let query =
 			'SELECT name, type, sql FROM sqlite_master WHERE sql IS NOT NULL';
 
+		const params: string[] = [];
 		if (table_filter && table_filter.length > 0) {
-			const table_list = table_filter.map((t) => `'${t}'`).join(', ');
-			query += ` AND name IN (${table_list})`;
+			const placeholders = table_filter.map(() => '?').join(', ');
+			query += ` AND name IN (${placeholders})`;
+			params.push(...table_filter);
 		}
 
 		query +=
 			" ORDER BY CASE type WHEN 'table' THEN 1 WHEN 'index' THEN 2 ELSE 3 END, name";
 
-		const result = execute_select_query(database_path, query);
+		const result = execute_select_query(database_path, query, params);
 		const schema_objects = result.rows;
 
 		if (format === 'json') {
