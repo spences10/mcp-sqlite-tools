@@ -1,6 +1,8 @@
 /**
  * CSV import/export functionality for SQLite Tools MCP server
  */
+import csv_parser from 'csv-parser';
+import { createArrayCsvWriter } from 'csv-writer';
 import {
 	createReadStream,
 	existsSync,
@@ -8,8 +10,6 @@ import {
 	statSync,
 } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
-import csv_parser from 'csv-parser';
-import { createArrayCsvWriter } from 'csv-writer';
 import { with_error_handling } from '../common/errors.js';
 import { quote_identifier } from '../common/sql.js';
 import { debug_log } from '../config.js';
@@ -80,7 +80,8 @@ function validate_csv_options(options: {
 	quote?: string;
 	escape?: string;
 }): void {
-	for (const [name, value] of Object.entries(options)) {
+	for (const name of ['delimiter', 'quote', 'escape'] as const) {
+		const value = options[name];
 		if (value !== undefined && value.length !== 1) {
 			throw new Error(`CSV ${name} must be a single character`);
 		}
