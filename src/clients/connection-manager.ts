@@ -168,8 +168,13 @@ export function open_database(
 		}
 
 		try {
-			// Open database connection
-			const db = new Database(resolved_path);
+			const config = get_config();
+
+			// Open database connection. better-sqlite3's timeout is SQLite's
+			// lock busy timeout, not a wall-clock query execution limit.
+			const db = new Database(resolved_path, {
+				timeout: config.SQLITE_BUSY_TIMEOUT,
+			});
 
 			// Configure database for better performance and safety
 			db.pragma('journal_mode = WAL');

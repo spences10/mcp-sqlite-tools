@@ -176,8 +176,8 @@ SQLITE_DEFAULT_PATH=.
 # Allow absolute paths for database files (security setting)
 SQLITE_ALLOW_ABSOLUTE_PATHS=true
 
-# Maximum query execution time in milliseconds
-SQLITE_MAX_QUERY_TIME=30000
+# SQLite lock busy timeout in milliseconds (not wall-clock query runtime)
+SQLITE_BUSY_TIMEOUT=30000
 
 # Default backup directory for database backups
 SQLITE_BACKUP_PATH=./backups
@@ -271,7 +271,7 @@ Add this to your MCP client configuration:
 			"env": {
 				"SQLITE_DEFAULT_PATH": ".",
 				"SQLITE_ALLOW_ABSOLUTE_PATHS": "true",
-				"SQLITE_MAX_QUERY_TIME": "30000",
+				"SQLITE_BUSY_TIMEOUT": "30000",
 				"SQLITE_BACKUP_PATH": "./backups"
 			}
 		}
@@ -289,7 +289,10 @@ server:
 | `SQLITE_DEFAULT_PATH`         | Default directory for database files        | `.`                           | `${workspaceFolder}/databases` |
 | `SQLITE_ALLOW_ABSOLUTE_PATHS` | Allow absolute paths in database operations | `true`                        | `false`                        |
 | `SQLITE_BACKUP_PATH`          | Default directory for database backups      | Same as `SQLITE_DEFAULT_PATH` | `./backups`                    |
-| `SQLITE_MAX_QUERY_TIME`       | Maximum query execution time (ms)           | `30000`                       | `60000`                        |
+| `SQLITE_BUSY_TIMEOUT`         | SQLite lock busy timeout in milliseconds    | `30000`                       | `60000`                        |
+
+`SQLITE_MAX_QUERY_TIME` is still accepted as a deprecated alias for
+`SQLITE_BUSY_TIMEOUT`; it is not a wall-clock query runtime limit.
 
 **Path Resolution:**
 
@@ -711,7 +714,8 @@ Import and execute schema from SQL or JSON.
 
 #### `backup_database`
 
-Creates a backup copy of a database.
+Creates a consistent SQLite backup using SQLite's online backup API,
+including committed data that may still be in WAL files.
 
 **Parameters:**
 

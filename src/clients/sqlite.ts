@@ -2,7 +2,6 @@
  * SQLite database client using better-sqlite3
  */
 import {
-	copyFileSync,
 	existsSync,
 	mkdirSync,
 	readdirSync,
@@ -100,57 +99,57 @@ export function get_database_info(
 /**
  * Create a backup of the database
  */
-export function backup_database(
+export async function backup_database(
 	source_path: string,
 	backup_path?: string,
-): BackupInfo {
-	return with_error_handling(() => {
-		const config = get_config();
-		const resolved_source_path = validate_database_path(source_path);
+): Promise<BackupInfo> {
+	const config = get_config();
+	const resolved_source_path = validate_database_path(source_path);
 
-		// Generate backup path if not provided
-		let resolved_backup_path: string;
-		if (backup_path) {
-			resolved_backup_path = validate_database_path(backup_path);
-		} else {
-			const timestamp = new Date()
-				.toISOString()
-				.replace(/[:.]/g, '-');
-			const base_name =
-				resolved_source_path.split('/').pop()?.replace('.db', '') ||
-				'database';
-			resolved_backup_path = resolve(
-				config.SQLITE_BACKUP_PATH,
-				`${base_name}-${timestamp}.db`,
-			);
-		}
+	// Generate backup path if not provided
+	let resolved_backup_path: string;
+	if (backup_path) {
+		resolved_backup_path = validate_database_path(backup_path);
+	} else {
+		const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+		const base_name =
+			resolved_source_path.split('/').pop()?.replace('.db', '') ||
+			'database';
+		resolved_backup_path = resolve(
+			config.SQLITE_BACKUP_PATH,
+			`${base_name}-${timestamp}.db`,
+		);
+	}
 
-		// Ensure backup directory exists
-		const backup_dir = dirname(resolved_backup_path);
-		if (!existsSync(backup_dir)) {
-			mkdirSync(backup_dir, { recursive: true });
-		}
+	// Ensure backup directory exists
+	const backup_dir = dirname(resolved_backup_path);
+	if (!existsSync(backup_dir)) {
+		mkdirSync(backup_dir, { recursive: true });
+	}
 
-		try {
-			// Copy the database file
-			copyFileSync(resolved_source_path, resolved_backup_path);
+	try {
+		const db = open_database(resolved_source_path);
 
-			// Get backup file size
-			const stats = statSync(resolved_backup_path);
+		// Use SQLite's online backup API instead of copying files. This captures
+		// committed WAL pages and produces a consistent backup while the source
+		// database remains open.
+		await db.backup(resolved_backup_path);
 
-			const backup_info: BackupInfo = {
-				source: resolved_source_path,
-				destination: resolved_backup_path,
-				timestamp: new Date().toISOString(),
-				size: stats.size,
-			};
+		// Get backup file size
+		const stats = statSync(resolved_backup_path);
 
-			debug_log('Created database backup:', backup_info);
-			return backup_info;
-		} catch (error) {
-			throw convert_sqlite_error(error, resolved_source_path);
-		}
-	}, 'backup_database')();
+		const backup_info: BackupInfo = {
+			source: resolved_source_path,
+			destination: resolved_backup_path,
+			timestamp: new Date().toISOString(),
+			size: stats.size,
+		};
+
+		debug_log('Created database backup:', backup_info);
+		return backup_info;
+	} catch (error) {
+		throw convert_sqlite_error(error, resolved_source_path);
+	}
 }
 
 /**

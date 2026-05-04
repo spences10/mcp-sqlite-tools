@@ -466,7 +466,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'backup_database',
 			description:
-				'✓ SAFE: Create complete backup copy. Copies all tables, data, indexes, schema. Auto-timestamps if no path specified.',
+				'✓ SAFE: Create consistent SQLite backup via online backup API. Includes committed WAL data. Auto-timestamps if no path specified.',
 			schema: BackupDatabaseSchema,
 		},
 		async ({ source_database_name, backup_path }) => {
@@ -480,7 +480,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 					source_database_name,
 				);
 
-				const backup_info = sqlite.backup_database(
+				const backup_info = await sqlite.backup_database(
 					source_path,
 					backup_path,
 				);

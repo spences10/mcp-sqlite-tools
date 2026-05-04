@@ -13,6 +13,17 @@ export const ConfigSchema = v.object({
 			v.transform((val: string) => val.toLowerCase() === 'true'),
 		),
 	),
+	SQLITE_BUSY_TIMEOUT: v.optional(
+		v.pipe(
+			v.string(),
+			v.transform((val: string) => parseInt(val, 10)),
+			v.number(),
+			v.minValue(1000),
+			v.maxValue(300000),
+		),
+	),
+	// Deprecated alias. This was previously documented as wall-clock query
+	// timeout, but better-sqlite3 can only enforce SQLite's lock busy timeout.
 	SQLITE_MAX_QUERY_TIME: v.optional(
 		v.pipe(
 			v.string(),
@@ -55,6 +66,7 @@ export function load_config(): Config {
 			SQLITE_DEFAULT_PATH: process.env['SQLITE_DEFAULT_PATH'],
 			SQLITE_ALLOW_ABSOLUTE_PATHS:
 				process.env['SQLITE_ALLOW_ABSOLUTE_PATHS'],
+			SQLITE_BUSY_TIMEOUT: process.env['SQLITE_BUSY_TIMEOUT'],
 			SQLITE_MAX_QUERY_TIME: process.env['SQLITE_MAX_QUERY_TIME'],
 			SQLITE_BACKUP_PATH: process.env['SQLITE_BACKUP_PATH'],
 			DEBUG: process.env['DEBUG'],
@@ -62,24 +74,31 @@ export function load_config(): Config {
 
 		const config = v.parse(ConfigSchema, raw_config);
 
-		// Apply defaults for optional fields that weren't provided
-		const configWithDefaults = {
+		// Apply defaults for optional fields that weren't provided.
+		// SQLITE_MAX_QUERY_TIME is retained as a deprecated alias for the busy
+		// timeout to avoid breaking existing user configuration.
+		const sqlite_busy_timeout =
+			config.SQLITE_BUSY_TIMEOUT ??
+			config.SQLITE_MAX_QUERY_TIME ??
+			30000;
+		const config_with_defaults = {
 			SQLITE_DEFAULT_PATH: config.SQLITE_DEFAULT_PATH || '.',
 			SQLITE_ALLOW_ABSOLUTE_PATHS:
 				config.SQLITE_ALLOW_ABSOLUTE_PATHS ?? true,
-			SQLITE_MAX_QUERY_TIME: config.SQLITE_MAX_QUERY_TIME ?? 30000,
+			SQLITE_BUSY_TIMEOUT: sqlite_busy_timeout,
+			SQLITE_MAX_QUERY_TIME: sqlite_busy_timeout,
 			SQLITE_BACKUP_PATH: config.SQLITE_BACKUP_PATH || './backups',
 			DEBUG: config.DEBUG ?? false,
 		};
 
 		// Resolve paths relative to current working directory (workspace)
 		return {
-			...configWithDefaults,
+			...config_with_defaults,
 			SQLITE_DEFAULT_PATH: resolve_database_path(
-				configWithDefaults.SQLITE_DEFAULT_PATH,
+				config_with_defaults.SQLITE_DEFAULT_PATH,
 			),
 			SQLITE_BACKUP_PATH: resolve_database_path(
-				configWithDefaults.SQLITE_BACKUP_PATH,
+				config_with_defaults.SQLITE_BACKUP_PATH,
 			),
 		};
 	} catch (error: unknown) {
