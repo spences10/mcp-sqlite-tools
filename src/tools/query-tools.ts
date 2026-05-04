@@ -5,6 +5,7 @@ import { McpServer } from 'tmcp';
 import * as v from 'valibot';
 import * as sqlite from '../clients/sqlite.js';
 import {
+	ToolUsageError,
 	create_tool_error_response,
 	create_tool_response,
 } from '../common/errors.js';
@@ -99,8 +100,13 @@ export function register_query_tools(server: McpServer<any>): void {
 
 				// Validate that this is a read-only query using SQLite's statement metadata.
 				if (!sqlite.is_read_only_query(query, database_path)) {
-					throw new Error(
+					throw new ToolUsageError(
 						'Only SQLite readonly statements are allowed with execute_read_query',
+						[
+							'Use execute_write_query for INSERT, UPDATE, DELETE, or mutating PRAGMA statements',
+							'Use execute_schema_query for CREATE, ALTER, or DROP statements',
+							'Use PRAGMA statements that better-sqlite3 reports as readonly only',
+						],
 					);
 				}
 

@@ -235,8 +235,14 @@ describe('SQLite safety boundaries', () => {
 			{ query: 'PRAGMA journal_mode=DELETE' },
 		);
 		expect(error_response.isError).toBe(true);
+		expect(error_response.json).toMatchObject({
+			error_type: 'tool_usage_error',
+		});
 		expect(error_response.json.message).toContain(
 			'Only SQLite readonly statements',
+		);
+		expect(error_response.json.suggestions).toContain(
+			'Use execute_write_query for INSERT, UPDATE, DELETE, or mutating PRAGMA statements',
 		);
 	});
 

@@ -84,6 +84,23 @@ export class DatabaseConnectionError extends Error {
 }
 
 /**
+ * Tool usage and safety boundary errors.
+ */
+export class ToolUsageError extends Error {
+	public readonly suggestions: string[];
+
+	constructor(message: string, suggestions: string[] = []) {
+		super(message);
+		this.name = 'ToolUsageError';
+		this.suggestions = suggestions;
+
+		if (Error.captureStackTrace) {
+			Error.captureStackTrace(this, ToolUsageError);
+		}
+	}
+}
+
+/**
  * Convert better-sqlite3 errors to our custom error types with actionable messages
  */
 export function convert_sqlite_error(
@@ -182,6 +199,10 @@ export function format_error(error: any): string {
 
 	if (error instanceof DatabaseConnectionError) {
 		return `Cannot connect to database: ${error.message}. Database: '${error.databasePath}'. Check if the database exists and is accessible.`;
+	}
+
+	if (error instanceof ToolUsageError) {
+		return `Tool usage error: ${error.message}`;
 	}
 
 	if (error instanceof Error) {
@@ -288,6 +309,9 @@ export function create_tool_error_response(error: unknown) {
 			'Check database file permissions',
 			'Ensure the database is not corrupted',
 		];
+	} else if (error instanceof ToolUsageError) {
+		error_info.error_type = 'tool_usage_error';
+		error_info.suggestions = error.suggestions;
 	}
 
 	return {
@@ -318,7 +342,8 @@ export function with_error_handling<T extends any[], R>(
 				error instanceof SqliteError ||
 				error instanceof ValidationError ||
 				error instanceof PathSecurityError ||
-				error instanceof DatabaseConnectionError
+				error instanceof DatabaseConnectionError ||
+				error instanceof ToolUsageError
 			) {
 				throw error;
 			}
