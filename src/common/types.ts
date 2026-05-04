@@ -6,7 +6,7 @@
 export interface QueryResult {
 	rows: Record<string, any>[];
 	changes: number;
-	lastInsertRowid: number | bigint;
+	last_insert_rowid: number | bigint;
 }
 
 // Table column information

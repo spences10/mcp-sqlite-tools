@@ -1,8 +1,0 @@
-node_modules/
-dist/
-.zed/
-*.log
-.git/
-.DS_Store
-pnpm-lock.yaml
-*.tgz

@@ -307,7 +307,9 @@ export function health_check_connections(): {
 			healthy++;
 		} catch (error) {
 			unhealthy++;
-			errors.push(`${path}: ${error}`);
+			const error_message =
+				error instanceof Error ? error.message : String(error);
+			errors.push(`${path}: ${error_message}`);
 
 			// Remove unhealthy connection
 			try {

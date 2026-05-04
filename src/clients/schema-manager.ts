@@ -169,7 +169,9 @@ export function import_schema(
 					(obj: any) => obj.type === 'table',
 				).length;
 			} catch (error) {
-				throw new Error(`Failed to parse JSON schema: ${error}`);
+				throw new Error(
+					`Failed to parse JSON schema: ${error instanceof Error ? error.message : String(error)}`,
+				);
 			}
 		} else {
 			// Parse SQL statements
@@ -215,7 +217,9 @@ export function import_schema(
 					type: statement.split(' ')[1]?.toLowerCase() || 'unknown',
 				});
 			} catch (error) {
-				const error_msg = `Statement ${i + 1}: ${error}`;
+				const error_message =
+					error instanceof Error ? error.message : String(error);
+				const error_msg = `Statement ${i + 1}: ${error_message}`;
 				errors.push(error_msg);
 				debug_log('Schema statement failed:', {
 					statement_number: i + 1,

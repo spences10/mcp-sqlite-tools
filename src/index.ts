@@ -58,7 +58,7 @@ class SqliteToolsServer {
 		});
 
 		process.on('exit', () => {
-			this.cleanup();
+			void this.cleanup();
 		});
 	}
 

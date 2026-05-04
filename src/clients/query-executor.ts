@@ -39,7 +39,7 @@ function convert_parameters(
 	if (is_positional) {
 		// Convert to array for positional parameters
 		const max_index = Math.max(...keys.map((k) => parseInt(k)));
-		const param_array: any[] = new Array(max_index);
+		const param_array: any[] = Array.from({ length: max_index });
 
 		for (const [key, value] of Object.entries(params)) {
 			const index = parseInt(key) - 1; // Convert 1-based to 0-based indexing
@@ -75,7 +75,7 @@ export function execute_query(
 			return {
 				rows: [],
 				changes: result.changes,
-				lastInsertRowid: result.lastInsertRowid,
+				last_insert_rowid: result.lastInsertRowid,
 			};
 		} catch (error) {
 			throw convert_sqlite_error(error, database_path);
@@ -110,7 +110,7 @@ export function execute_select_query(
 			return {
 				rows: rows as Record<string, any>[],
 				changes: 0,
-				lastInsertRowid: 0,
+				last_insert_rowid: 0,
 			};
 		} catch (error) {
 			throw convert_sqlite_error(error, database_path);
