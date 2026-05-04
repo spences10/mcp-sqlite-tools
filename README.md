@@ -89,6 +89,7 @@ freely explore your database structure and read data.
 
 - `execute_write_query` - INSERT, UPDATE, DELETE
 - `bulk_insert` - Batch insertions
+- `import_csv` - CSV data import
 - `drop_table` - Permanent table deletion
 
 These tools should require individual approval for each operation,
@@ -100,9 +101,14 @@ happens.
 - `execute_schema_query` - CREATE, ALTER, DROP statements
 - `create_table` - Table creation
 - `import_schema` - Schema import
+- `import_csv` - Can create missing tables from CSV headers
 
 These tools modify database structure and should require individual
 approval to prevent unintended schema changes.
+
+**⚠️ FILE WRITE Tools**:
+
+- `export_csv` - Writes CSV files, including absolute paths
 
 **🔒 TRANSACTION Tools**:
 
@@ -649,6 +655,55 @@ Insert multiple records in batches.
 }
 ```
 
+### CSV Operations
+
+#### `import_csv`
+
+Import a headered CSV file into a table. If the table does not exist,
+it is created from CSV headers with inferred SQLite column types.
+Values are coerced by default (`""`/`null` to NULL, numbers to
+numbers, booleans to 1/0). Row-level insert errors are reported and
+successful rows continue unless `fail_fast` is true.
+
+**Parameters:**
+
+- `table` (string, required): Target table name
+- `file_path` (string, required): CSV file path; absolute paths
+  allowed
+- `database_name` (string, optional): Database path or current context
+  name
+- `create_table` (boolean, optional): Create missing table (default:
+  true)
+- `batch_size` (number, optional): Rows per batch (default: 1000)
+- `fail_fast` (boolean, optional): Stop on first row error (default:
+  false)
+- `max_errors` (number, optional): Max row errors returned
+  (default: 100)
+- `coerce_types` (boolean, optional): Coerce CSV strings (default:
+  true)
+- `delimiter`, `quote`, `escape`, `encoding` (optional): CSV parsing
+  options
+
+#### `export_csv`
+
+Export either a full table or a read-only query result to CSV. Provide
+exactly one of `table` or `query`.
+
+**Parameters:**
+
+- `file_path` (string, required): Output CSV path; absolute paths
+  allowed
+- `table` (string, optional): Table to export
+- `query` (string, optional): Read-only query to export
+- `database_name` (string, optional): Database path or current context
+  name
+- `delimiter`, `record_delimiter`, `encoding` (optional): CSV output
+  options
+- `always_quote` (boolean, optional): Quote every field (default:
+  false)
+- `append` (boolean, optional): Append to existing file (default:
+  false)
+
 ### Transaction Management
 
 #### `begin_transaction`
@@ -740,11 +795,13 @@ The server automatically classifies tools into safety categories:
 1. **✓ SAFE**: Read-only operations (SELECT, PRAGMA, EXPLAIN, database
    info, backups)
 2. **⚠️ DESTRUCTIVE**: Data modification (INSERT, UPDATE, DELETE, bulk
-   insert)
+   insert, CSV import)
 3. **⚠️ SCHEMA CHANGE**: Structure modification (CREATE, ALTER, DROP,
-   schema import)
-4. **⚠️ TRANSACTION**: Transaction control (BEGIN, COMMIT, ROLLBACK)
-5. **✓ MAINTENANCE**: Optimization operations (VACUUM, connection
+   schema import, CSV table creation)
+4. **⚠️ FILE WRITE**: Export operations that write files, including
+   absolute CSV paths
+5. **⚠️ TRANSACTION**: Transaction control (BEGIN, COMMIT, ROLLBACK)
+6. **✓ MAINTENANCE**: Optimization operations (VACUUM, connection
    management)
 
 ### Best Practices
@@ -755,9 +812,10 @@ The server automatically classifies tools into safety categories:
 3. **Review destructive operations** before execution
 4. **Create backups** before major schema changes
 5. **Use bulk_insert** for inserting large datasets efficiently
-6. **Export schemas** before major structural changes
-7. **Use appropriate tools** for different operation types
-8. **Monitor connection pool** usage in high-traffic scenarios
+6. **Review CSV absolute paths** before import/export file operations
+7. **Export schemas** before major structural changes
+8. **Use appropriate tools** for different operation types
+9. **Monitor connection pool** usage in high-traffic scenarios
 
 ## Development
 
@@ -810,6 +868,7 @@ The server is built with a modular architecture:
   tools
 - **`src/tools/transaction-tools.ts`**: Transaction management tools
 - **`src/tools/schema-tools.ts`**: Schema export/import tools
+- **`src/tools/csv-tools.ts`**: CSV import/export tools
 - **`src/tools/context.ts`**: Database context management
 
 ### Common Utilities
@@ -837,9 +896,9 @@ This modular design provides:
 - **[valibot](https://valibot.dev/)**: Lightweight validation library
   for type-safe inputs
 - **[csv-parser](https://github.com/mafintosh/csv-parser)**: CSV
-  parsing capabilities
+  import parsing
 - **[csv-writer](https://github.com/ryu1kn/csv-writer)**: CSV export
-  functionality
+  writing
 
 ### Key Features Provided by Dependencies
 
@@ -848,7 +907,8 @@ This modular design provides:
 - **better-sqlite3**: Synchronous SQLite operations with superior
   performance
 - **valibot**: Runtime type validation for all tool parameters
-- **csv-\***: Future-ready for CSV import/export capabilities
+- **csv-\***: Headered CSV import/export with type coercion and
+  row-level import error reporting
 
 ## Contributing
 

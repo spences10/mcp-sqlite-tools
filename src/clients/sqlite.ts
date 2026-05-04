@@ -20,6 +20,7 @@ import {
 	open_database,
 	validate_database_path,
 } from './connection-manager.js';
+import { export_csv, import_csv } from './csv-manager.js';
 import {
 	bulk_insert,
 	describe_table,
@@ -40,7 +41,9 @@ export {
 	describe_table,
 	execute_query,
 	execute_select_query,
+	export_csv,
 	export_schema,
+	import_csv,
 	import_schema,
 	is_read_only_query,
 	is_schema_query,

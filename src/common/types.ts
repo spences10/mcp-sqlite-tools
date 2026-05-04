@@ -50,7 +50,6 @@ export interface CsvOptions {
 	delimiter?: string;
 	quote?: string;
 	escape?: string;
-	headers?: boolean;
 	encoding?: string;
 }
 
@@ -96,16 +95,23 @@ export interface DescribeTableInput {
 export interface ImportCsvInput {
 	table: string;
 	file_path: string;
+	database_name?: string;
+	create_table?: boolean;
+	batch_size?: number;
+	fail_fast?: boolean;
+	max_errors?: number;
+	coerce_types?: boolean;
 	options?: CsvOptions;
-	database?: string;
 }
 
 export interface ExportCsvInput {
-	table: string;
 	file_path: string;
+	table?: string;
 	query?: string;
-	options?: CsvOptions;
-	database?: string;
+	database_name?: string;
+	always_quote?: boolean;
+	append?: boolean;
+	options?: CsvOptions & { record_delimiter?: string };
 }
 
 export interface BackupDatabaseInput {
