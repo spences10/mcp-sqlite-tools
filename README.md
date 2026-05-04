@@ -532,7 +532,7 @@ Executes read-only SQL queries (SELECT, PRAGMA, EXPLAIN).
 			}
 		],
 		"changes": 0,
-		"lastInsertRowid": 0
+		"last_insert_rowid": 0
 	},
 	"row_count": 2,
 	"pagination": {
@@ -572,7 +572,7 @@ Executes SQL that modifies data (INSERT, UPDATE, DELETE).
 	"result": {
 		"rows": [],
 		"changes": 1,
-		"lastInsertRowid": 1
+		"last_insert_rowid": 1
 	},
 	"message": "⚠️ DESTRUCTIVE OPERATION COMPLETED: Data modified in database '/tmp/demo.db'. Rows affected: 1"
 }
@@ -605,7 +605,7 @@ Executes DDL queries (CREATE, ALTER, DROP).
 	"result": {
 		"rows": [],
 		"changes": 0,
-		"lastInsertRowid": 0
+		"last_insert_rowid": 0
 	},
 	"message": "⚠️ SCHEMA CHANGE COMPLETED: Database structure modified in '/tmp/demo.db'. Changes: 0"
 }
@@ -816,6 +816,8 @@ The server is built with a modular architecture:
 
 - **`src/common/types.ts`**: TypeScript type definitions
 - **`src/common/errors.ts`**: Error handling utilities
+- **`src/common/sql.ts`**: SQL identifier and literal helpers
+- **`src/common/schema-sql.ts`**: SQLite schema statement parsing
 
 This modular design provides:
 

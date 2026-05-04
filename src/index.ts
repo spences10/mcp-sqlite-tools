@@ -7,6 +7,10 @@ import { McpServer } from 'tmcp';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+	start_connection_maintenance,
+	stop_connection_maintenance,
+} from './clients/connection-manager.js';
 import { close_all_databases } from './clients/sqlite.js';
 import { get_config } from './config.js';
 import { register_tools } from './tools/handler.js';
@@ -67,7 +71,8 @@ class SqliteToolsServer {
 	 */
 	private async cleanup(): Promise<void> {
 		try {
-			// Close all database connections
+			// Stop maintenance and close all database connections
+			stop_connection_maintenance();
 			close_all_databases();
 
 			console.error('SQLite Tools MCP server shutdown complete');
@@ -87,7 +92,8 @@ class SqliteToolsServer {
 				`SQLite Tools MCP server initialized with default path: ${config.SQLITE_DEFAULT_PATH}`,
 			);
 
-			// Register all tools using the unified handler
+			// Start explicit connection maintenance and register tools.
+			start_connection_maintenance();
 			register_tools(this.server);
 
 			console.error('All tools registered');

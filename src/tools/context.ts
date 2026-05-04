@@ -10,9 +10,9 @@ let current_database: string | null = null;
 /**
  * Set the current database context
  */
-export function set_current_database(databasePath: string): void {
+export function set_current_database(database_path: string): void {
 	// Validate the path before setting it
-	const resolved_path = validate_database_path(databasePath);
+	const resolved_path = validate_database_path(database_path);
 	current_database = resolved_path;
 	debug_log('Set current database context:', resolved_path);
 }
@@ -57,10 +57,9 @@ export function resolve_database_name(
 		return default_path;
 	}
 
-	// Fallback to a default name
-	const fallback_path = validate_database_path('default.db');
-	debug_log('Using fallback database:', fallback_path);
-	return fallback_path;
+	throw new Error(
+		'No database selected. Provide database_name, call open_database first, or set SQLITE_DEFAULT_DATABASE.',
+	);
 }
 
 /**
@@ -73,7 +72,7 @@ export function get_context_info(): {
 } {
 	const config = get_config();
 	return {
-		current_database: current_database,
+		current_database,
 		default_database: process.env['SQLITE_DEFAULT_DATABASE'] || null,
 		default_path: config.SQLITE_DEFAULT_PATH,
 	};

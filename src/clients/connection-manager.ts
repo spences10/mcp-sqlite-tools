@@ -405,16 +405,3 @@ export function stop_connection_maintenance(): void {
 		debug_log('Stopped connection pool maintenance');
 	}
 }
-
-// Cleanup on process exit
-const cleanup_handler = () => {
-	stop_connection_maintenance();
-	close_all_databases();
-};
-
-process.on('exit', cleanup_handler);
-process.on('SIGINT', cleanup_handler);
-process.on('SIGTERM', cleanup_handler);
-
-// Start connection maintenance when module loads
-start_connection_maintenance();

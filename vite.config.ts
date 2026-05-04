@@ -5,7 +5,7 @@ export default defineConfig({
 		entry: ['src/index.ts'],
 		format: ['esm'],
 		sourcemap: true,
-		dts: true,
+		dts: false,
 		outExtensions: () => ({ js: '.js' }),
 	},
 	test: {

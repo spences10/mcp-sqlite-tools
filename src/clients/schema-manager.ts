@@ -2,6 +2,7 @@
  * Schema export/import functionality for SQLite Tools MCP server
  */
 import { with_error_handling } from '../common/errors.js';
+import { split_schema_statements } from '../common/schema-sql.js';
 import { debug_log } from '../config.js';
 import {
 	execute_query,
@@ -174,18 +175,10 @@ export function import_schema(
 				);
 			}
 		} else {
-			// Parse SQL statements
-			// Split by semicolons and filter out comments and empty lines
-			statements = schema
-				.split(';')
-				.map((stmt) => stmt.trim())
-				.filter(
-					(stmt) =>
-						stmt &&
-						!stmt.startsWith('--') &&
-						!stmt.startsWith('PRAGMA'),
-				)
-				.filter((stmt) => stmt.toLowerCase().startsWith('create'));
+			statements = split_schema_statements(schema).filter((stmt) => {
+				const normalized_statement = stmt.trimStart().toLowerCase();
+				return normalized_statement.startsWith('create');
+			});
 
 			expected_tables = statements.filter((stmt) =>
 				stmt.toLowerCase().includes('create table'),
