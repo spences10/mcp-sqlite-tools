@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@tmcp/adapter-valibot':
         specifier: ^0.1.6
-        version: 0.1.6(tmcp@1.19.4)(valibot@1.4.0)
+        version: 0.1.6(tmcp@1.19.4)(valibot@1.4.1)
       '@tmcp/transport-stdio':
         specifier: ^0.4.3
         version: 0.4.3(tmcp@1.19.4)
@@ -28,7 +28,7 @@ importers:
         version: 1.19.4
       valibot:
         specifier: ^1.4.0
-        version: 1.4.0
+        version: 1.4.1
     devDependencies:
       '@changesets/cli':
         specifier: ^2.31.0
@@ -1391,8 +1391,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  valibot@1.4.0:
-    resolution: {integrity: sha512-iC/x7fVcSyOwlm/VSt7RlHnzNGLGvR9GnxdifUeWoCJo0q4ZZvrVkIHC6faTlkxG47I2Y4UrFquPuVHCrOnrLg==}
+  valibot@1.4.1:
+    resolution: {integrity: sha512-klCmFTz2jeDluy9RwX+F884TCiogtdBJ/YaxSx1EOBYXa3NXNWj8kR1jjN8rzluwojJVWWaHJ4r1U5LfICnM3g==}
     peerDependencies:
       typescript: '>=5'
     peerDependenciesMeta:
@@ -1915,12 +1915,12 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@tmcp/adapter-valibot@0.1.6(tmcp@1.19.4)(valibot@1.4.0)':
+  '@tmcp/adapter-valibot@0.1.6(tmcp@1.19.4)(valibot@1.4.1)':
     dependencies:
       '@standard-schema/spec': 1.1.0
-      '@valibot/to-json-schema': 1.7.0(valibot@1.4.0)
+      '@valibot/to-json-schema': 1.7.0(valibot@1.4.1)
       tmcp: 1.19.4
-      valibot: 1.4.0
+      valibot: 1.4.1
 
   '@tmcp/transport-stdio@0.4.3(tmcp@1.19.4)':
     dependencies:
@@ -1950,9 +1950,9 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
-  '@valibot/to-json-schema@1.7.0(valibot@1.4.0)':
+  '@valibot/to-json-schema@1.7.0(valibot@1.4.1)':
     dependencies:
-      valibot: 1.4.0
+      valibot: 1.4.1
 
   '@vitest/expect@4.1.7':
     dependencies:
@@ -2642,7 +2642,7 @@ snapshots:
       json-rpc-2.0: 1.7.1
       sqids: 0.3.0
       uri-template-matcher: 1.1.2
-      valibot: 1.4.0
+      valibot: 1.4.1
     transitivePeerDependencies:
       - typescript
 
@@ -2667,7 +2667,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  valibot@1.4.0: {}
+  valibot@1.4.1: {}
 
   vite-plus@0.1.22(@types/node@25.9.1)(vite@8.0.10(@types/node@25.9.1)):
     dependencies:
