@@ -55,7 +55,7 @@
 		"@changesets/cli": "^2.31.0",
 		"@types/better-sqlite3": "^7.6.13",
 		"@types/node": "^25.9.1",
-		"vite-plus": "^0.1.22",
+		"vite-plus": "^0.2.0",
 		"vitest": "^4.1.7"
 	},
 	"engines": {
