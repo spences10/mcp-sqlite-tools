@@ -1,5 +1,12 @@
 # mcp-sqlite-tools
 
+## 0.0.19
+
+### Patch Changes
+
+- 71a5c85: Shorten SQLite MCP tool descriptions to reduce token usage
+  without changing schemas, APIs, or behavior.
+
 ## 0.0.18
 
 ### Patch Changes
