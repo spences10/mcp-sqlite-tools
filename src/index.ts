@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { ValibotJsonSchemaAdapter } from '@tmcp/adapter-valibot';
 import { StdioTransport } from '@tmcp/transport-stdio';
 import { McpServer } from 'tmcp';
 
@@ -13,7 +12,7 @@ import {
 } from './clients/connection-manager.js';
 import { close_all_databases } from './clients/sqlite.js';
 import { get_config } from './config.js';
-import { register_tools } from './tools/handler.js';
+import { create_mcp_server } from './mcp-server.js';
 
 // Get package info for server metadata
 const __filename = fileURLToPath(import.meta.url);
@@ -28,27 +27,13 @@ const { name, version } = pkg;
  */
 class SqliteToolsServer {
 	private server: McpServer<any>;
-	private adapter: ValibotJsonSchemaAdapter;
 
 	constructor() {
-		// Initialize the adapter
-		this.adapter = new ValibotJsonSchemaAdapter();
-
-		// Initialize the server with metadata
-		this.server = new McpServer<any>(
-			{
-				name,
-				version,
-				description:
-					'MCP server for local SQLite database operations',
-			},
-			{
-				adapter: this.adapter,
-				capabilities: {
-					tools: { listChanged: true },
-				},
-			},
-		);
+		this.server = create_mcp_server({
+			name,
+			version,
+			description: 'MCP server for local SQLite database operations',
+		});
 
 		// Handle process termination
 		process.on('SIGINT', async () => {
@@ -92,9 +77,9 @@ class SqliteToolsServer {
 				`SQLite Tools MCP server initialized with default path: ${config.SQLITE_DEFAULT_PATH}`,
 			);
 
-			// Start explicit connection maintenance and register tools.
+			// Start explicit connection maintenance. Tools are registered when
+			// the server is created so discovery works before a legacy session.
 			start_connection_maintenance();
-			register_tools(this.server);
 
 			console.error('All tools registered');
 		} catch (error) {
