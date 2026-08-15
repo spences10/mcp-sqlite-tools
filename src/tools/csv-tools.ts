@@ -90,7 +90,7 @@ export function register_csv_tools(server: McpServer<any>): void {
 		{
 			name: 'import_csv',
 			description:
-				'⚠️ DESTRUCTIVE/SCHEMA CHANGE: Import a headered CSV file into SQLite. Creates the table from headers when missing, coerces values by default, and reports row-level errors.',
+				'⚠️ DESTRUCTIVE/SCHEMA: Import headered CSV into a table.',
 			schema: ImportCsvSchema,
 		},
 		async ({
@@ -157,7 +157,7 @@ export function register_csv_tools(server: McpServer<any>): void {
 		{
 			name: 'export_csv',
 			description:
-				'⚠️ FILE WRITE: Export a table or read-only SELECT/PRAGMA/EXPLAIN query to a CSV file. Can write absolute paths. Provide exactly one of table or query.',
+				'⚠️ FILE WRITE: Export table or read-only query to CSV.',
 			schema: ExportCsvSchema,
 		},
 		async ({

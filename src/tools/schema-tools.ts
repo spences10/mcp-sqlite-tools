@@ -45,8 +45,7 @@ export function register_schema_tools(server: McpServer<any>): void {
 	server.tool<typeof ExportSchemaSchema>(
 		{
 			name: 'export_schema',
-			description:
-				'✓ SAFE: Export schema as SQL or JSON. Includes tables, indexes, views, triggers. SQL for recreation, JSON for analysis.',
+			description: '✓ SAFE: Export schema as SQL or JSON.',
 			schema: ExportSchemaSchema,
 		},
 		async ({ database_name, format = 'sql', tables }) => {
@@ -85,7 +84,7 @@ export function register_schema_tools(server: McpServer<any>): void {
 		{
 			name: 'import_schema',
 			description:
-				'⚠️ SCHEMA CHANGE: Import schema from SQL or JSON. Creates tables, indexes, views, triggers. Fails if objects exist without IF NOT EXISTS.',
+				'⚠️ SCHEMA CHANGE: Import SQL/JSON schema objects.',
 			schema: ImportSchemaSchema,
 		},
 		async ({ database_name, schema, format = 'sql' }) => {

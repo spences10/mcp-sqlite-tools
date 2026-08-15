@@ -135,7 +135,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'open_database',
 			description:
-				'✓ SAFE: Open an existing database file. Sets as current context. Returns database info. Errors if file does not exist — use create_database to make a new one.',
+				'✓ SAFE: Open existing SQLite DB and set current context.',
 			schema: OpenDatabaseSchema,
 		},
 		async ({ path }) => {
@@ -161,7 +161,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'create_database',
 			description:
-				'⚠️ CREATES FILE: Create a new empty SQLite database at the given path. Errors if file already exists. Use open_database for existing databases.',
+				'⚠️ CREATES FILE: Create new empty SQLite DB; fails if file exists.',
 			schema: CreateDatabaseSchema,
 		},
 		async ({ path }) => {
@@ -198,8 +198,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 	server.tool<typeof DatabaseOnlySchema>(
 		{
 			name: 'close_database',
-			description:
-				"✓ SAFE: Close database connection and free resources. Doesn't affect file.",
+			description: '✓ SAFE: Close DB connection; file unchanged.',
 			schema: DatabaseOnlySchema,
 		},
 		async ({ database_name }) => {
@@ -224,8 +223,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 	server.tool<typeof ListDatabasesSchema>(
 		{
 			name: 'list_databases',
-			description:
-				'✓ SAFE: List .db/.sqlite/.sqlite3 files in directory. Returns paths, sizes, dates. Max 100 results.',
+			description: '✓ SAFE: List SQLite DB files in a directory.',
 			schema: ListDatabasesSchema,
 		},
 		async ({ directory }) => {
@@ -249,7 +247,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'database_info',
 			description:
-				'✓ SAFE: Get database info (size, table/index counts, statistics). Metadata only, no data.',
+				'✓ SAFE: Get DB metadata and statistics, not row data.',
 			schema: DatabaseOnlySchema,
 		},
 		async ({ database_name }) => {
@@ -274,7 +272,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'list_tables',
 			description:
-				'✓ SAFE: List tables/views with types and row counts. Supports pagination (max 1000). Use verbosity="summary" for names only.',
+				'✓ SAFE: List tables/views with pagination and verbosity.',
 			schema: DatabaseWithPaginationSchema,
 		},
 		async ({
@@ -332,8 +330,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 	server.tool<typeof DescribeTableSchema>(
 		{
 			name: 'describe_table',
-			description:
-				'✓ SAFE: Get table schema (columns, types, constraints, indexes, keys, defaults, nullability).',
+			description: '✓ SAFE: Describe table columns and constraints.',
 			schema: DescribeTableSchema,
 		},
 		async ({ table, database_name, verbosity = 'detailed' }) => {
@@ -381,7 +378,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'create_table',
 			description:
-				'⚠️ SCHEMA CHANGE: Create table with columns and constraints. Supports primary keys, defaults, NOT NULL. Fails if exists.',
+				'⚠️ SCHEMA CHANGE: Create table; fails if it exists.',
 			schema: CreateTableSchema,
 		},
 		async ({ name, columns, database_name }) => {
@@ -430,8 +427,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 	server.tool<typeof DropTableSchema>(
 		{
 			name: 'drop_table',
-			description:
-				'⚠️ DESTRUCTIVE: Permanently delete table and all data. Cannot be undone. Removes structure, rows, indexes, triggers.',
+			description: '⚠️ DESTRUCTIVE: Drop table and all data.',
 			schema: DropTableSchema,
 		},
 		async ({ table, database_name }) => {
@@ -466,7 +462,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 		{
 			name: 'backup_database',
 			description:
-				'✓ SAFE: Create consistent SQLite backup via online backup API. Includes committed WAL data. Auto-timestamps if no path specified.',
+				'✓ SAFE: Back up SQLite DB, including committed WAL data.',
 			schema: BackupDatabaseSchema,
 		},
 		async ({ source_database_name, backup_path }) => {
@@ -500,8 +496,7 @@ export function register_admin_tools(server: McpServer<any>): void {
 	server.tool<typeof DatabaseOnlySchema>(
 		{
 			name: 'vacuum_database',
-			description:
-				'✓ MAINTENANCE: Optimize storage by reclaiming space and defragmenting. Requires free space equal to database size.',
+			description: '✓ MAINTENANCE: VACUUM database to reclaim space.',
 			schema: DatabaseOnlySchema,
 		},
 		async ({ database_name }) => {
