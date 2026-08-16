@@ -45,8 +45,56 @@ describe('query executor', () => {
 			execute_select_query(db_path, 'PRAGMA journal_mode=DELETE'),
 		).toThrow(/Query is not read-only/);
 		expect(() =>
+			execute_select_query(db_path, 'PRAGMA user_version=2'),
+		).toThrow(/Query is not read-only/);
+		expect(() =>
+			execute_select_query(
+				db_path,
+				"ATTACH DATABASE ':memory:' AS other",
+			),
+		).toThrow(/Query is not read-only/);
+		expect(() =>
+			execute_select_query(
+				db_path,
+				'EXPLAIN INSERT INTO t VALUES (1)',
+			),
+		).toThrow(/Query is not read-only/);
+		expect(() =>
 			execute_select_query(db_path, 'SELECT 1; DROP TABLE t'),
 		).toThrow(/contains more than one statement/);
+
+		expect(
+			execute_select_query(db_path, 'PRAGMA table_info(t)').rows,
+		).toHaveLength(1);
+	});
+
+	it('preserves native SQLite constraint error details', () => {
+		const db_path = temp_db();
+		execute_query(
+			db_path,
+			'CREATE TABLE unique_values (id INTEGER PRIMARY KEY)',
+		);
+		execute_query(
+			db_path,
+			'INSERT INTO unique_values VALUES (?)',
+			[1],
+		);
+
+		expect(
+			execute_select_query(
+				db_path,
+				'SELECT id FROM unique_values WHERE id = :id',
+				{ id: 1 },
+			).rows,
+		).toEqual([{ id: 1 }]);
+
+		expect(() =>
+			execute_query(
+				db_path,
+				'INSERT INTO unique_values VALUES (?)',
+				[1],
+			),
+		).toThrow(/constraint violation/i);
 	});
 
 	it('quotes generated identifier SQL for bulk inserts', () => {

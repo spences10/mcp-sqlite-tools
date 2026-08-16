@@ -1,7 +1,6 @@
 /**
  * Database connection management for SQLite Tools MCP server
  */
-import Database from 'better-sqlite3';
 import { existsSync, mkdirSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import {
@@ -11,10 +10,11 @@ import {
 	with_error_handling,
 } from '../common/errors.js';
 import { debug_log, get_config } from '../config.js';
+import { SqliteDatabase } from './sqlite-driver.js';
 
 // Connection metadata
 interface ConnectionMetadata {
-	database: Database.Database;
+	database: SqliteDatabase;
 	created_at: Date;
 	last_used: Date;
 	use_count: number;
@@ -81,7 +81,7 @@ export function validate_database_path(path: string): string {
 export function open_database(
 	path: string,
 	create: boolean = false,
-): Database.Database {
+): SqliteDatabase {
 	return with_error_handling(() => {
 		const resolved_path = validate_database_path(path);
 
@@ -170,9 +170,9 @@ export function open_database(
 		try {
 			const config = get_config();
 
-			// Open database connection. better-sqlite3's timeout is SQLite's
+			// Open database connection. node:sqlite's timeout is SQLite's
 			// lock busy timeout, not a wall-clock query execution limit.
-			const db = new Database(resolved_path, {
+			const db = new SqliteDatabase(resolved_path, {
 				timeout: config.SQLITE_BUSY_TIMEOUT,
 			});
 

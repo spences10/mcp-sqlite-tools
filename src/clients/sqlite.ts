@@ -1,5 +1,5 @@
 /**
- * SQLite database client using better-sqlite3
+ * SQLite database client using node:sqlite
  */
 import {
 	existsSync,

@@ -101,7 +101,7 @@ export class ToolUsageError extends Error {
 }
 
 /**
- * Convert better-sqlite3 errors to our custom error types with actionable messages
+ * Convert native SQLite errors to our custom error types with actionable messages.
  */
 export function convert_sqlite_error(
 	error: any,
@@ -111,14 +111,25 @@ export function convert_sqlite_error(
 		return error;
 	}
 
-	// Extract SQLite error code from better-sqlite3 error
 	let code: SqliteErrorCode = 'SQLITE_ERROR';
 	let errno: number | undefined;
 	let enhanced_message = error.message || 'Unknown SQLite error';
+	const primary_error_codes: Record<number, SqliteErrorCode> = {
+		5: 'SQLITE_BUSY',
+		6: 'SQLITE_LOCKED',
+		8: 'SQLITE_READONLY',
+		14: 'SQLITE_CANTOPEN',
+		19: 'SQLITE_CONSTRAINT',
+		26: 'SQLITE_NOTADB',
+	};
+	const native_error_code =
+		typeof error.errcode === 'number'
+			? primary_error_codes[error.errcode & 0xff]
+			: undefined;
+	const sqlite_code = native_error_code ?? error.code;
 
-	if (error.code) {
-		// Map common better-sqlite3 error codes with enhanced messages
-		switch (error.code) {
+	if (sqlite_code) {
+		switch (sqlite_code) {
 			case 'SQLITE_BUSY':
 				code = 'SQLITE_BUSY';
 				enhanced_message = `Database is busy (locked by another connection). Try again in a moment, or check if another process is using the database. Original error: ${error.message}`;
@@ -149,7 +160,9 @@ export function convert_sqlite_error(
 		}
 	}
 
-	if (typeof error.errno === 'number') {
+	if (typeof error.errcode === 'number') {
+		errno = error.errcode;
+	} else if (typeof error.errno === 'number') {
 		errno = error.errno;
 	}
 

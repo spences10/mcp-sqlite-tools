@@ -154,6 +154,9 @@ queries.
 
 ## Installation
 
+Requires Node.js 24.12 or later. The server uses Node's built-in
+SQLite module.
+
 ### From npm (when published)
 
 ```bash
@@ -891,8 +894,6 @@ This modular design provides:
 
 - **[tmcp](https://github.com/paoloricciuti/tmcp)**: Modern TypeScript
   MCP framework
-- **[better-sqlite3](https://github.com/WiseLibs/better-sqlite3)**:
-  High-performance SQLite driver
 - **[valibot](https://valibot.dev/)**: Lightweight validation library
   for type-safe inputs
 - **[csv-parser](https://github.com/mafintosh/csv-parser)**: CSV
@@ -904,8 +905,8 @@ This modular design provides:
 
 - **tmcp**: Streamlined MCP server development with excellent
   TypeScript support
-- **better-sqlite3**: Synchronous SQLite operations with superior
-  performance
+- **node:sqlite**: Built-in synchronous SQLite operations without a
+  native package dependency
 - **valibot**: Runtime type validation for all tool parameters
 - **csv-\***: Headered CSV import/export with type coercion and
   row-level import error reporting
@@ -924,5 +925,4 @@ MIT License - see the [LICENSE](LICENSE) file for details.
   [Model Context Protocol](https://github.com/modelcontextprotocol)
 - Inspired by
   [mcp-turso-cloud](https://github.com/spences10/mcp-turso-cloud)
-- Uses [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
-  for high-performance SQLite operations
+- Uses Node's built-in `node:sqlite` module

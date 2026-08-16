@@ -23,7 +23,7 @@ export const ConfigSchema = v.object({
 		),
 	),
 	// Deprecated alias. This was previously documented as wall-clock query
-	// timeout, but better-sqlite3 can only enforce SQLite's lock busy timeout.
+	// timeout, but SQLite can only enforce its lock busy timeout.
 	SQLITE_MAX_QUERY_TIME: v.optional(
 		v.pipe(
 			v.string(),

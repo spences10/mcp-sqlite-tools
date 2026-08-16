@@ -1,7 +1,1 @@
 minimumReleaseAge: 2880
-
-allowBuilds:
-  better-sqlite3: true
-
-onlyBuiltDependencies:
-  - better-sqlite3

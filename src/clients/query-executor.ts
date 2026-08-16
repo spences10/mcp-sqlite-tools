@@ -6,20 +6,20 @@ import {
 	with_error_handling,
 } from '../common/errors.js';
 import {
+	looks_like_read_query,
+	quote_identifier,
+} from '../common/sql.js';
+import {
 	ColumnInfo,
 	QueryResult,
 	TableInfo,
 } from '../common/types.js';
-import {
-	looks_like_read_query,
-	quote_identifier,
-} from '../common/sql.js';
 import { debug_log } from '../config.js';
 import { open_database } from './connection-manager.js';
 import { has_active_transaction } from './transaction-manager.js';
 
 /**
- * Convert parameters to the format expected by better-sqlite3
+ * Convert parameters to the format expected by node:sqlite
  */
 function convert_parameters(
 	params: Record<string, any> | any[],

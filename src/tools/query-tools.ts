@@ -105,7 +105,7 @@ export function register_query_tools(server: McpServer<any>): void {
 						[
 							'Use execute_write_query for INSERT, UPDATE, DELETE, or mutating PRAGMA statements',
 							'Use execute_schema_query for CREATE, ALTER, or DROP statements',
-							'Use PRAGMA statements that better-sqlite3 reports as readonly only',
+							'Use read-only PRAGMA statements only',
 						],
 					);
 				}
