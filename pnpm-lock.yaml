@@ -10,10 +10,10 @@ importers:
     dependencies:
       '@tmcp/adapter-valibot':
         specifier: ^0.1.6
-        version: 0.1.6(tmcp@1.20.0-next.0)(valibot@1.4.2)
+        version: 0.1.6(tmcp@1.20.0-next.2)(valibot@1.4.2)
       '@tmcp/transport-stdio':
         specifier: 0.5.0-next.0
-        version: 0.5.0-next.0(tmcp@1.20.0-next.0)
+        version: 0.5.0-next.0(tmcp@1.20.0-next.2)
       csv-parser:
         specifier: ^3.2.1
         version: 3.2.1
@@ -21,8 +21,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       tmcp:
-        specifier: 1.20.0-next.0
-        version: 1.20.0-next.0
+        specifier: 1.20.0-next.2
+        version: 1.20.0-next.2
       valibot:
         specifier: ^1.4.2
         version: 1.4.2
@@ -1189,8 +1189,8 @@ packages:
     resolution: {integrity: sha512-Bf+ILmBgretUrdJxzXM0SgXLZ3XfiaUuOj/IKQHuTXip+05Xn+uyEYdVg0kYDipTBcLrCVyUzAPz7QmArb0mmw==}
     engines: {node: '>=14.0.0'}
 
-  tmcp@1.20.0-next.0:
-    resolution: {integrity: sha512-j4pscf9+L0oBacyTf61IYnEucm47U8fuNSyEoa1WAl5vORUBgdJZSIL/DrF163Kv8gZPo3hQYG1d6scH/Thz7Q==}
+  tmcp@1.20.0-next.2:
+    resolution: {integrity: sha512-q2idHdSvQiVwVO+CaBFNeH2jpZQ6dyH5LufH7b+eGD9TT0o5yf79R0/TFpUcvaCAoFVxnGeXOZXJhAFU54IIzw==}
 
   totalist@3.0.1:
     resolution: {integrity: sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==}
@@ -1720,22 +1720,22 @@ snapshots:
     dependencies:
       '@testing-library/dom': 10.4.1
 
-  '@tmcp/adapter-valibot@0.1.6(tmcp@1.20.0-next.0)(valibot@1.4.2)':
+  '@tmcp/adapter-valibot@0.1.6(tmcp@1.20.0-next.2)(valibot@1.4.2)':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@valibot/to-json-schema': 1.7.1(valibot@1.4.2)
-      tmcp: 1.20.0-next.0
+      tmcp: 1.20.0-next.2
       valibot: 1.4.2
 
-  '@tmcp/session-manager@0.3.0-next.0(tmcp@1.20.0-next.0)':
+  '@tmcp/session-manager@0.3.0-next.0(tmcp@1.20.0-next.2)':
     dependencies:
       json-rpc-2.0: 1.7.1
-      tmcp: 1.20.0-next.0
+      tmcp: 1.20.0-next.2
 
-  '@tmcp/transport-stdio@0.5.0-next.0(tmcp@1.20.0-next.0)':
+  '@tmcp/transport-stdio@0.5.0-next.0(tmcp@1.20.0-next.2)':
     dependencies:
-      '@tmcp/session-manager': 0.3.0-next.0(tmcp@1.20.0-next.0)
-      tmcp: 1.20.0-next.0
+      '@tmcp/session-manager': 0.3.0-next.0(tmcp@1.20.0-next.2)
+      tmcp: 1.20.0-next.2
 
   '@tybys/wasm-util@0.10.3':
     dependencies:
@@ -2210,7 +2210,7 @@ snapshots:
 
   tinyrainbow@3.1.0: {}
 
-  tmcp@1.20.0-next.0:
+  tmcp@1.20.0-next.2:
     dependencies:
       '@standard-schema/spec': 1.1.0
       json-rpc-2.0: 1.7.1
