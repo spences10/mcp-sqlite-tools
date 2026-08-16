@@ -157,6 +157,39 @@ queries.
 Requires Node.js 24.12 or later. The server uses Node's built-in
 SQLite module.
 
+### Why native SQLite?
+
+Using `node:sqlite` removes the native addon, its install script, and
+its platform-specific binaries. A clean production install fell from
+31.3 MB with `better-sqlite3` to 3.6 MB with native SQLite, an 88.5%
+reduction. The npm tarball itself is similar in size: 63.1 KB native
+versus 60.0 KB published. The large saving is in the installed
+dependency tree.
+
+The migration also removes `better-sqlite3` and its type package. It
+makes installation independent of prebuilt addon availability or a
+working native compiler. This requires Node.js 24.12 or later.
+
+#### Driver benchmark
+
+Lower times are better. These medians use 20,000 rows, two warmups,
+and seven measured runs per driver. Each sample uses a new database
+and the driver order alternates. Database setup is outside the
+measured region except for the insert workload.
+
+| Workload            | `node:sqlite` | `better-sqlite3` | Native result |
+| ------------------- | ------------: | ---------------: | ------------: |
+| Insert transaction  |      11.13 ms |         23.78 ms |  2.14× faster |
+| Indexed point reads |      25.23 ms |         21.40 ms |  17.9% slower |
+| Full row scan       |       6.39 ms |          3.29 ms |  94.3% slower |
+| Update transaction  |       8.04 ms |         15.40 ms |  1.92× faster |
+| Online backup       |       0.55 ms |          0.38 ms |  45.0% slower |
+
+Measured on Linux x64 with Node.js 24.15.0 and an AMD Ryzen AI 9
+HX 370. Node used SQLite 3.51.3. `better-sqlite3@13.0.1` used SQLite
+3.53.3. These microbenchmarks explain trade-offs, not application-wide
+performance. MCP transport and validation costs are not included.
+
 ### From npm (when published)
 
 ```bash

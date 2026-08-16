@@ -11,10 +11,11 @@ export type SqliteValue =
 	| bigint
 	| Uint8Array
 	| null;
+type SqliteInputValue = SqliteValue | boolean;
 export type SqliteParameters =
-	| Record<string, SqliteValue>
+	| Record<string, SqliteInputValue>
 	| unknown[]
-	| SqliteValue
+	| SqliteInputValue
 	| undefined;
 
 export interface RunResult {
@@ -98,9 +99,30 @@ const WRITE_ACTIONS = new Set(
 		.filter((value): value is number => typeof value === 'number'),
 );
 
+function normalize_value(value: unknown): unknown {
+	return typeof value === 'boolean' ? Number(value) : value;
+}
+
 function bind_args(params: SqliteParameters): SqliteValue[] {
 	if (params === undefined) return [];
-	return (Array.isArray(params) ? params : [params]) as SqliteValue[];
+	if (Array.isArray(params)) {
+		return params.map(normalize_value) as SqliteValue[];
+	}
+	if (
+		typeof params === 'object' &&
+		params !== null &&
+		!(params instanceof Uint8Array)
+	) {
+		return [
+			Object.fromEntries(
+				Object.entries(params).map(([key, value]) => [
+					key,
+					normalize_value(value),
+				]),
+			),
+		] as unknown as SqliteValue[];
+	}
+	return [normalize_value(params)] as SqliteValue[];
 }
 
 function has_sql_tail(tail: string): boolean {

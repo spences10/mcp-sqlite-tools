@@ -99,17 +99,20 @@ describe('query executor', () => {
 
 	it('quotes generated identifier SQL for bulk inserts', () => {
 		const db_path = temp_db();
-		execute_query(db_path, 'CREATE TABLE "odd; table" ("a""b" TEXT)');
+		execute_query(
+			db_path,
+			'CREATE TABLE "odd; table" ("a""b" TEXT, enabled INTEGER)',
+		);
 
 		const result = bulk_insert(db_path, 'odd; table', [
-			{ 'a"b': 'ok' },
+			{ 'a"b': 'ok', enabled: true },
 		]);
 		expect(result.inserted).toBe(1);
 
 		const rows = execute_select_query(
 			db_path,
-			'SELECT "a""b" AS value FROM "odd; table"',
+			'SELECT "a""b" AS value, enabled FROM "odd; table"',
 		).rows;
-		expect(rows).toEqual([{ value: 'ok' }]);
+		expect(rows).toEqual([{ value: 'ok', enabled: 1 }]);
 	});
 });
