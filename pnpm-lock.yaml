@@ -12,8 +12,8 @@ importers:
         specifier: ^0.1.6
         version: 0.1.6(tmcp@1.20.0-next.2)(valibot@1.4.2)
       '@tmcp/transport-stdio':
-        specifier: 0.5.0-next.0
-        version: 0.5.0-next.0(tmcp@1.20.0-next.2)
+        specifier: 0.5.0
+        version: 0.5.0(tmcp@1.20.0-next.2)
       csv-parser:
         specifier: ^3.2.1
         version: 3.2.1
@@ -568,13 +568,13 @@ packages:
       tmcp: ^1.17.0
       valibot: ^1.1.0
 
-  '@tmcp/session-manager@0.3.0-next.0':
-    resolution: {integrity: sha512-w5KF92ijShe38lLZSoiOJjndqocsjJYaiNkLVnlR/sLG4hArEKe3ZQ262CN7uPzj8g9N4mzJdcSGC2SC7vNv4Q==}
+  '@tmcp/session-manager@0.3.0':
+    resolution: {integrity: sha512-L16r8qlzXUoS0ec7kuap1P1nQorCcZHHUFe7UGijwwrfBRXB0hFnfC+/BM1PVdGlM7Ade8YxomecybQN5imYXA==}
     peerDependencies:
       tmcp: ^1.20.0-next.0 || ^1.20.0
 
-  '@tmcp/transport-stdio@0.5.0-next.0':
-    resolution: {integrity: sha512-0+U0DPYg97LFVzEK1sEyvvNBX8GSYpehlUKxvjHn9HqFEa9zpMvL/m5nWeJD5zxra+kOKllHeRAw7eyZK/Szew==}
+  '@tmcp/transport-stdio@0.5.0':
+    resolution: {integrity: sha512-1NZsGDveDraa/KWsOOn8VybPn5PbYJi5hRWuIRUKIX7joa3Lx7tSf+0EeXwzG1OyPlsEeTNagBWpBpvpfh5lpw==}
     peerDependencies:
       tmcp: ^1.20.0-next.0 || ^1.20.0
 
@@ -1059,11 +1059,6 @@ packages:
     resolution: {integrity: sha512-Y3wQdFg2Va6etvQ5I82yUhGdsKrcYox6p7FfL1LbK2J4V01F9TGlepTIhnK24t7koZibmg82KGglhA1XK5IsLQ==}
     engines: {node: '>=10'}
 
-  nanoid@3.3.16:
-    resolution: {integrity: sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
   nanoid@3.3.18:
     resolution: {integrity: sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -1118,10 +1113,6 @@ packages:
   pngjs@7.0.0:
     resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
     engines: {node: '>=14.19.0'}
-
-  postcss@8.5.23:
-    resolution: {integrity: sha512-g50586zr4bZmwFiTlflMu8E0bDTb5I5gertgwAKmsdUlTQIhZtunzUlD1WSzwcVWPoAVpsrA6vlfCD7oXvRwgg==}
-    engines: {node: ^10 || ^12 || >=14}
 
   postcss@8.5.26:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
@@ -1740,14 +1731,14 @@ snapshots:
       tmcp: 1.20.0-next.2
       valibot: 1.4.2
 
-  '@tmcp/session-manager@0.3.0-next.0(tmcp@1.20.0-next.2)':
+  '@tmcp/session-manager@0.3.0(tmcp@1.20.0-next.2)':
     dependencies:
       json-rpc-2.0: 1.7.1
       tmcp: 1.20.0-next.2
 
-  '@tmcp/transport-stdio@0.5.0-next.0(tmcp@1.20.0-next.2)':
+  '@tmcp/transport-stdio@0.5.0(tmcp@1.20.0-next.2)':
     dependencies:
-      '@tmcp/session-manager': 0.3.0-next.0(tmcp@1.20.0-next.2)
+      '@tmcp/session-manager': 0.3.0(tmcp@1.20.0-next.2)
       tmcp: 1.20.0-next.2
 
   '@tybys/wasm-util@0.10.3':
@@ -1794,7 +1785,7 @@ snapshots:
       magic-string: 0.30.21
       pngjs: 7.0.0
       sirv: 3.0.2
-      tinyrainbow: 3.1.0
+      tinyrainbow: 3.1.1
       vitest: 4.1.10(@types/node@26.2.0)(@vitest/browser-preview@4.1.10)(vite@8.1.3(@types/node@26.2.0)(yaml@2.9.0))
       ws: 8.21.0
     transitivePeerDependencies:
@@ -2082,8 +2073,6 @@ snapshots:
 
   mrmime@2.0.1: {}
 
-  nanoid@3.3.16: {}
-
   nanoid@3.3.18: {}
 
   obug@2.1.1: {}
@@ -2155,12 +2144,6 @@ snapshots:
   picomatch@4.0.5: {}
 
   pngjs@7.0.0: {}
-
-  postcss@8.5.23:
-    dependencies:
-      nanoid: 3.3.16
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
 
   postcss@8.5.26:
     dependencies:
@@ -2324,7 +2307,7 @@ snapshots:
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.5
-      postcss: 8.5.23
+      postcss: 8.5.26
       rolldown: 1.1.4
       tinyglobby: 0.2.17
     optionalDependencies:
