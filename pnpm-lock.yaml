@@ -16,7 +16,7 @@ importers:
         version: 0.4.3(tmcp@1.19.4)
       better-sqlite3:
         specifier: ^13.0.0
-        version: 13.0.1
+        version: 13.0.3
       csv-parser:
         specifier: ^3.2.1
         version: 3.2.1
@@ -893,8 +893,8 @@ packages:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
 
-  better-sqlite3@13.0.1:
-    resolution: {integrity: sha512-LYpmOXdkpQYf4wmlxkdzW01XGlOXNIbjLg45yNkh0FQ4814VbK9PdOFmhZpYbej+EZtR/i3FDdhEG98HqZdgnA==}
+  better-sqlite3@13.0.3:
+    resolution: {integrity: sha512-RbOBxmLBG8uvFUc15X9+9SFemKcQ0WBuISBVkpuiaUB2qblC8UWlHEjdWVoZ8AdhSwmoEgsiXKfopX0CQxaACQ==}
     engines: {node: '>=22'}
 
   cac@7.0.0:
@@ -1072,8 +1072,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  node-addon-api@8.9.0:
-    resolution: {integrity: sha512-ekZMeaaIzSQTSpr7X2X3iJM7lTzgnx8ahAG9pJfT/7+14mlEM8ZYQ9cgCDvSSRbReFK0oHli3WrZdCiRsgAT9Q==}
+  node-addon-api@8.9.2:
+    resolution: {integrity: sha512-VijLXbi3UACN69I0JVXJsX4tjACjNoQDgv2gTF6sx2wWEi8tkSg2eX8p5gSIFi8z2+DL3oHmY6OyKce38SDolg==}
     engines: {node: ^18 || ^20 || >= 21}
 
   obug@2.1.1:
@@ -1956,9 +1956,9 @@ snapshots:
 
   assertion-error@2.0.1: {}
 
-  better-sqlite3@13.0.1:
+  better-sqlite3@13.0.3:
     dependencies:
-      node-addon-api: 8.9.0
+      node-addon-api: 8.9.2
 
   cac@7.0.0: {}
 
@@ -2077,7 +2077,7 @@ snapshots:
 
   nanoid@3.3.16: {}
 
-  node-addon-api@8.9.0: {}
+  node-addon-api@8.9.2: {}
 
   obug@2.1.1: {}
 
