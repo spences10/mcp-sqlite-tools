@@ -1,5 +1,21 @@
 # mcp-sqlite-tools
 
+## 0.1.0
+
+### Minor Changes
+
+- 59f1945: Replace better-sqlite3 with Node’s built-in SQLite driver,
+  removing native installation requirements and strengthening
+  read-only enforcement.
+
+### Patch Changes
+
+- b4c4f62: Convert boolean SQLite parameters safely and document
+  native driver performance and installation footprint improvements
+  clearly.
+- 030d08c: Streamline the README and add MCPick setup instructions
+  with focused configuration, API, and development documentation.
+
 ## 0.0.20
 
 ### Patch Changes
