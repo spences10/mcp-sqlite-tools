@@ -177,7 +177,7 @@ export function open_database(
 			});
 
 			// Configure database for better performance and safety
-			db.pragma('journal_mode = WAL');
+			db.pragma(`journal_mode = ${config.SQLITE_JOURNAL_MODE}`);
 			db.pragma('synchronous = NORMAL');
 			db.pragma('cache_size = 1000');
 			db.pragma('foreign_keys = ON');
