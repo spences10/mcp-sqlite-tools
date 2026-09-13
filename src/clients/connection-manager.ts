@@ -38,21 +38,12 @@ const POOL_CONFIG = {
 export function validate_database_path(path: string): string {
 	const config = get_config();
 
-	// Check if absolute paths are allowed
-	if (isAbsolute(path) && !config.SQLITE_ALLOW_ABSOLUTE_PATHS) {
-		throw new PathSecurityError(
-			'Absolute paths are not allowed. Set SQLITE_ALLOW_ABSOLUTE_PATHS=true to enable.',
-			path,
-		);
-	}
-
-	// Resolve relative paths against the default directory
-	let resolved_path: string;
-	if (isAbsolute(path)) {
-		resolved_path = path;
-	} else {
-		resolved_path = resolve(config.SQLITE_DEFAULT_PATH, path);
-	}
+	// Resolve first, then verify containment. This keeps validation
+	// idempotent so double calls (resolve_database_name -> open_database)
+	// are safe, while still confining paths to SQLITE_DEFAULT_PATH.
+	const resolved_path = isAbsolute(path)
+		? path
+		: resolve(config.SQLITE_DEFAULT_PATH, path);
 
 	// Security check: ensure the resolved path is within allowed directories
 	if (!config.SQLITE_ALLOW_ABSOLUTE_PATHS) {
