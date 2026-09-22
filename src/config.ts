@@ -34,6 +34,14 @@ export const ConfigSchema = v.object({
 		),
 	),
 	SQLITE_BACKUP_PATH: v.optional(v.string(), './backups'),
+	SQLITE_JOURNAL_MODE: v.optional(
+		v.pipe(
+			v.string(),
+			v.transform((val: string) => val.trim().toLowerCase()),
+			v.picklist(['delete', 'truncate', 'persist', 'wal']),
+		),
+		'wal',
+	),
 	DEBUG: v.optional(
 		v.pipe(
 			v.string(),
@@ -69,6 +77,7 @@ export function load_config(): Config {
 			SQLITE_BUSY_TIMEOUT: process.env['SQLITE_BUSY_TIMEOUT'],
 			SQLITE_MAX_QUERY_TIME: process.env['SQLITE_MAX_QUERY_TIME'],
 			SQLITE_BACKUP_PATH: process.env['SQLITE_BACKUP_PATH'],
+			SQLITE_JOURNAL_MODE: process.env['SQLITE_JOURNAL_MODE'],
 			DEBUG: process.env['DEBUG'],
 		};
 
@@ -88,6 +97,7 @@ export function load_config(): Config {
 			SQLITE_BUSY_TIMEOUT: sqlite_busy_timeout,
 			SQLITE_MAX_QUERY_TIME: sqlite_busy_timeout,
 			SQLITE_BACKUP_PATH: config.SQLITE_BACKUP_PATH || './backups',
+			SQLITE_JOURNAL_MODE: config.SQLITE_JOURNAL_MODE ?? 'wal',
 			DEBUG: config.DEBUG ?? false,
 		};
 

@@ -57,6 +57,7 @@ control, create a `.vscode/mcp.json` file in your workspace:
 			"env": {
 				"SQLITE_DEFAULT_PATH": "${workspaceFolder}/databases",
 				"SQLITE_ALLOW_ABSOLUTE_PATHS": "true",
+				"SQLITE_JOURNAL_MODE": "wal",
 				"SQLITE_BACKUP_PATH": "${workspaceFolder}/backups"
 			}
 		}
@@ -85,6 +86,7 @@ Add this to your MCP client configuration:
 				"SQLITE_DEFAULT_PATH": ".",
 				"SQLITE_ALLOW_ABSOLUTE_PATHS": "true",
 				"SQLITE_BUSY_TIMEOUT": "30000",
+				"SQLITE_JOURNAL_MODE": "wal",
 				"SQLITE_BACKUP_PATH": "./backups"
 			}
 		}
@@ -97,19 +99,25 @@ Add this to your MCP client configuration:
 The following environment variables can be used to configure the MCP
 server:
 
-| Variable                      | Description                                 | Default                       | Example                        |
-| ----------------------------- | ------------------------------------------- | ----------------------------- | ------------------------------ |
-| `SQLITE_DEFAULT_PATH`         | Default directory for database files        | `.`                           | `${workspaceFolder}/databases` |
-| `SQLITE_ALLOW_ABSOLUTE_PATHS` | Allow absolute paths in database operations | `true`                        | `false`                        |
-| `SQLITE_BACKUP_PATH`          | Default directory for database backups      | Same as `SQLITE_DEFAULT_PATH` | `./backups`                    |
-| `SQLITE_BUSY_TIMEOUT`         | SQLite lock busy timeout in milliseconds    | `30000`                       | `60000`                        |
+| Variable                      | Description                               | Default                       | Example                        |
+| ----------------------------- | ----------------------------------------- | ----------------------------- | ------------------------------ |
+| `SQLITE_DEFAULT_PATH`         | Default directory for database files      | `.`                           | `${workspaceFolder}/databases` |
+| `SQLITE_ALLOW_ABSOLUTE_PATHS` | Allow paths outside the default directory | `true`                        | `false`                        |
+| `SQLITE_BACKUP_PATH`          | Default directory for database backups    | Same as `SQLITE_DEFAULT_PATH` | `./backups`                    |
+| `SQLITE_BUSY_TIMEOUT`         | SQLite lock busy timeout in milliseconds  | `30000`                       | `60000`                        |
+| `SQLITE_JOURNAL_MODE`         | SQLite journal mode                       | `wal`                         | `delete`                       |
+
+`SQLITE_JOURNAL_MODE` accepts `delete`, `truncate`, `persist`, or
+`wal`. Use `delete` for databases in file-synchronized directories.
+The unsafe SQLite modes `memory` and `off` are not accepted.
 
 `SQLITE_MAX_QUERY_TIME` is still accepted as a deprecated alias for
 `SQLITE_BUSY_TIMEOUT`; it is not a wall-clock query runtime limit.
 
 **Path Resolution:**
 
-- Relative paths are resolved from the default path
-- Use `${workspaceFolder}` in VS Code for workspace-relative paths
-- Set `SQLITE_ALLOW_ABSOLUTE_PATHS=true` to enable absolute path
-  operations
+- Relative paths are resolved from the default path.
+- Use `${workspaceFolder}` in VS Code for workspace-relative paths.
+- When `SQLITE_ALLOW_ABSOLUTE_PATHS=false`, relative and absolute
+  paths must resolve inside `SQLITE_DEFAULT_PATH`.
+- Symbolic links cannot be used to escape the default directory.

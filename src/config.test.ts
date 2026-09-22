@@ -3,6 +3,26 @@ import { describe, expect, it } from 'vitest';
 import { load_config } from './config.js';
 
 describe('configuration', () => {
+	it('normalizes and validates journal modes', () => {
+		const original_journal_mode = process.env.SQLITE_JOURNAL_MODE;
+		try {
+			delete process.env.SQLITE_JOURNAL_MODE;
+			expect(load_config().SQLITE_JOURNAL_MODE).toBe('wal');
+
+			process.env.SQLITE_JOURNAL_MODE = ' TRUNCATE ';
+			expect(load_config().SQLITE_JOURNAL_MODE).toBe('truncate');
+
+			process.env.SQLITE_JOURNAL_MODE = 'memory';
+			expect(() => load_config()).toThrow(
+				/Configuration validation failed/,
+			);
+		} finally {
+			if (original_journal_mode === undefined)
+				delete process.env.SQLITE_JOURNAL_MODE;
+			else process.env.SQLITE_JOURNAL_MODE = original_journal_mode;
+		}
+	});
+
 	it('treats query timeout config as SQLite busy timeout', () => {
 		const original_busy_timeout = process.env.SQLITE_BUSY_TIMEOUT;
 		const original_max_query_time = process.env.SQLITE_MAX_QUERY_TIME;

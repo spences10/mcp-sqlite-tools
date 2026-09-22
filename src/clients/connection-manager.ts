@@ -1,8 +1,21 @@
 /**
  * Database connection management for SQLite Tools MCP server
  */
-import { existsSync, mkdirSync, statSync } from 'node:fs';
-import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import {
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	realpathSync,
+	statSync,
+} from 'node:fs';
+import {
+	basename,
+	dirname,
+	isAbsolute,
+	relative,
+	resolve,
+	sep,
+} from 'node:path';
 import {
 	DatabaseConnectionError,
 	PathSecurityError,
@@ -32,47 +45,78 @@ const POOL_CONFIG = {
 	health_check_interval_minutes: 10,
 };
 
+function path_entry_exists(path: string): boolean {
+	try {
+		lstatSync(path);
+		return true;
+	} catch (error) {
+		const code = (error as NodeJS.ErrnoException).code;
+		if (code === 'ENOENT' || code === 'ENOTDIR') return false;
+		throw new PathSecurityError(
+			'Path cannot be inspected safely',
+			path,
+		);
+	}
+}
+
+function canonicalize_path(path: string): string {
+	let existing_path = path;
+	const missing_segments: string[] = [];
+
+	while (!path_entry_exists(existing_path)) {
+		const parent = dirname(existing_path);
+		if (parent === existing_path) break;
+		missing_segments.unshift(basename(existing_path));
+		existing_path = parent;
+	}
+
+	try {
+		return resolve(realpathSync(existing_path), ...missing_segments);
+	} catch {
+		throw new PathSecurityError(
+			'Path cannot be resolved safely',
+			path,
+		);
+	}
+}
+
+function is_path_within(root: string, path: string): boolean {
+	const relative_path = relative(root, path);
+	return (
+		relative_path === '' ||
+		(relative_path !== '..' &&
+			!relative_path.startsWith(`..${sep}`) &&
+			!isAbsolute(relative_path))
+	);
+}
+
 /**
  * Validate and resolve database path
  */
 export function validate_database_path(path: string): string {
 	const config = get_config();
+	const resolved_path = isAbsolute(path)
+		? resolve(path)
+		: resolve(config.SQLITE_DEFAULT_PATH, path);
 
-	// Check if absolute paths are allowed
-	if (isAbsolute(path) && !config.SQLITE_ALLOW_ABSOLUTE_PATHS) {
+	if (config.SQLITE_ALLOW_ABSOLUTE_PATHS) {
+		return resolved_path;
+	}
+
+	const default_path = canonicalize_path(config.SQLITE_DEFAULT_PATH);
+	const canonical_path = canonicalize_path(resolved_path);
+	if (!is_path_within(default_path, canonical_path)) {
 		throw new PathSecurityError(
-			'Absolute paths are not allowed. Set SQLITE_ALLOW_ABSOLUTE_PATHS=true to enable.',
+			'Path traversal outside the default directory is not allowed',
 			path,
 		);
 	}
 
-	// Resolve relative paths against the default directory
-	let resolved_path: string;
-	if (isAbsolute(path)) {
-		resolved_path = path;
-	} else {
-		resolved_path = resolve(config.SQLITE_DEFAULT_PATH, path);
-	}
-
-	// Security check: ensure the resolved path is within allowed directories
-	if (!config.SQLITE_ALLOW_ABSOLUTE_PATHS) {
-		const relative_path = relative(
-			config.SQLITE_DEFAULT_PATH,
-			resolved_path,
-		);
-		if (relative_path.startsWith('..') || isAbsolute(relative_path)) {
-			throw new PathSecurityError(
-				'Path traversal outside the default directory is not allowed',
-				path,
-			);
-		}
-	}
-
 	debug_log('Validated database path:', {
 		original: path,
-		resolved_path,
+		resolved_path: canonical_path,
 	});
-	return resolved_path;
+	return canonical_path;
 }
 
 /**
@@ -167,17 +211,27 @@ export function open_database(
 			}
 		}
 
+		let db: SqliteDatabase | undefined;
 		try {
 			const config = get_config();
 
 			// Open database connection. node:sqlite's timeout is SQLite's
 			// lock busy timeout, not a wall-clock query execution limit.
-			const db = new SqliteDatabase(resolved_path, {
+			db = new SqliteDatabase(resolved_path, {
 				timeout: config.SQLITE_BUSY_TIMEOUT,
 			});
 
-			// Configure database for better performance and safety
-			db.pragma('journal_mode = WAL');
+			// Configure database for better performance and safety.
+			const journal_mode = db.pragma(
+				`journal_mode = ${config.SQLITE_JOURNAL_MODE}`,
+				{ simple: true },
+			);
+			if (journal_mode !== config.SQLITE_JOURNAL_MODE) {
+				throw new DatabaseConnectionError(
+					`Could not apply journal mode '${config.SQLITE_JOURNAL_MODE}'. SQLite kept '${String(journal_mode)}'.`,
+					resolved_path,
+				);
+			}
 			db.pragma('synchronous = NORMAL');
 			db.pragma('cache_size = 1000');
 			db.pragma('foreign_keys = ON');
@@ -204,6 +258,12 @@ export function open_database(
 			});
 			return db;
 		} catch (error) {
+			try {
+				db?.close();
+			} catch {
+				// Preserve the original open or configuration error.
+			}
+			if (error instanceof DatabaseConnectionError) throw error;
 			throw convert_sqlite_error(error, resolved_path);
 		}
 	}, 'open_database')();

@@ -74,6 +74,7 @@ manually:
 				"SQLITE_DEFAULT_PATH": ".",
 				"SQLITE_ALLOW_ABSOLUTE_PATHS": "true",
 				"SQLITE_BUSY_TIMEOUT": "30000",
+				"SQLITE_JOURNAL_MODE": "wal",
 				"SQLITE_BACKUP_PATH": "./backups"
 			}
 		}
@@ -87,13 +88,22 @@ for more client-specific examples.
 
 ## Environment variables
 
-| Variable                      | Purpose                                  | Default               |
-| ----------------------------- | ---------------------------------------- | --------------------- |
-| `SQLITE_DEFAULT_PATH`         | Base directory for database files        | `.`                   |
-| `SQLITE_ALLOW_ABSOLUTE_PATHS` | Allow absolute database paths            | `true`                |
-| `SQLITE_BACKUP_PATH`          | Default backup directory                 | Default database path |
-| `SQLITE_BUSY_TIMEOUT`         | SQLite lock busy timeout in milliseconds | `30000`               |
-| `DEBUG`                       | Enable diagnostic logging                | `false`               |
+| Variable                      | Purpose                                   | Default               |
+| ----------------------------- | ----------------------------------------- | --------------------- |
+| `SQLITE_DEFAULT_PATH`         | Base directory for database files         | `.`                   |
+| `SQLITE_ALLOW_ABSOLUTE_PATHS` | Allow paths outside the default directory | `true`                |
+| `SQLITE_BACKUP_PATH`          | Default backup directory                  | Default database path |
+| `SQLITE_BUSY_TIMEOUT`         | SQLite lock busy timeout in milliseconds  | `30000`               |
+| `SQLITE_JOURNAL_MODE`         | `delete`, `truncate`, `persist`, or `wal` | `wal`                 |
+| `DEBUG`                       | Enable diagnostic logging                 | `false`               |
+
+When `SQLITE_ALLOW_ABSOLUTE_PATHS=false`, relative and absolute paths
+must resolve inside `SQLITE_DEFAULT_PATH`. Symbolic links cannot be
+used to escape that directory.
+
+Use `SQLITE_JOURNAL_MODE=delete` for databases in file-synchronized
+directories. The unsafe SQLite modes `memory` and `off` are not
+accepted.
 
 `SQLITE_MAX_QUERY_TIME` remains available as a deprecated alias for
 `SQLITE_BUSY_TIMEOUT`. It does not limit wall-clock query runtime.
