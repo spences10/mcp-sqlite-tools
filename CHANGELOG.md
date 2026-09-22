@@ -1,5 +1,12 @@
 # mcp-sqlite-tools
 
+## 0.1.1
+
+### Patch Changes
+
+- 739d01d: fix secure database path validation and add configurable SQLite
+  journal modes for safer synchronized storage
+
 ## 0.1.0
 
 ### Minor Changes
