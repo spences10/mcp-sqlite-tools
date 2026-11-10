@@ -4,8 +4,8 @@
 
 ### Patch Changes
 
-- 739d01d: fix secure database path validation and add configurable SQLite
-  journal modes for safer synchronized storage
+- 739d01d: fix secure database path validation and add configurable
+  SQLite journal modes for safer synchronized storage
 
 ## 0.1.0
 
